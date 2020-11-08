@@ -1,2 +1,3 @@
-# Mechatronics-2
-Mechatronic hamster ball mars rover robot thing!
+# Mechatronics II: Working Rovertime
+
+Some day, there will be stuff here.
