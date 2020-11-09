@@ -1,3 +1,22 @@
 # Mechatronics II: Working Rovertime
 
-Some day, there will be stuff here.
+_"This is one small step for hamster... one giant leap for hamsterkind"_
+
+Code for the Mechatronics 2 assignment (Year 4 IDE) to build a robot contained in a rolling 'hamster ball'.
+
+## Specs
+
+- Python 3.8.3 (64-bit conda environment)
+- OpenCV 4.4 with ArUco library
+- Arduino Nano 33 IoT running compiled Simulink model
+
+## Troubleshooting
+
+If Anaconda makes an absolute mess of the install like mine did, the following might help fix it:
+
+https://medium.com/@udiyosovzon/how-to-activate-conda-environment-in-vs-code-ce599497f20d
+
+To make pylint recognise opencv subpackages, add the following to `settings.json` in VSCode:
+```
+"python.linting.pylintArgs": [ "--generate-members" ]
+```
