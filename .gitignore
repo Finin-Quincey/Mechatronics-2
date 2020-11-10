@@ -1,6 +1,20 @@
 # IDE
 .vscode/
+
+# Misc
 examples/
+# Ignore all calibration files...
+*.npz
+# ...except the one for the overhead webcam (we haven't made this yet, I just put something sensible for now)
+!calibrations/webcam.npz
+
+# OS Gubbins
+# Windows generates this whenever you have images in a folder
+Thumbs.db
+# Mac generates this for some reason
+.DS_Store
+
+### Auto-generated stuff ###
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -9,8 +23,6 @@ __pycache__/
 
 # C extensions
 *.so
-
-Tests/Calibration.npz
 
 # Distribution / packaging
 .Python
