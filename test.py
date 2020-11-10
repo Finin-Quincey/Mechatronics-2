@@ -7,4 +7,4 @@ eggs = "monty"
 
 print("Hello world!")
 
-print(cv2.version.opencv_version)
+# Hello
