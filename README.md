@@ -26,3 +26,10 @@ To make pylint recognise opencv subpackages, add the following to `settings.json
 - OpenCV documentation: https://docs.opencv.org/4.4.0/index.html
   - OpenCV Python tutorials: https://docs.opencv.org/4.4.0/d6/d00/tutorial_py_root.html
   - ArUco module reference: https://docs.opencv.org/4.4.0/d9/d6a/group__aruco.html
+- Python documentation: https://docs.python.org/3.8/
+  - The Python Tutorial: https://docs.python.org/3.8/tutorial/index.html
+    - Basics of strings in Python: https://docs.python.org/3.8/tutorial/introduction.html#strings
+    - More stringy stuff: https://docs.python.org/3.8/tutorial/inputoutput.html#fancier-output-formatting
+    - Control flow in Python: https://docs.python.org/3.8/tutorial/controlflow.html
+    - Object-oriented programming in Python: https://docs.python.org/3.8/tutorial/classes.html
+  - Python standard library docs: https://docs.python.org/3.8/library/index.html
