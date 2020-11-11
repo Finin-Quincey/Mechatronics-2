@@ -33,3 +33,4 @@ To make pylint recognise opencv subpackages, add the following to `settings.json
     - Control flow in Python: https://docs.python.org/3.8/tutorial/controlflow.html
     - Object-oriented programming in Python: https://docs.python.org/3.8/tutorial/classes.html
   - Python standard library docs: https://docs.python.org/3.8/library/index.html
+- Numpy basics: https://numpy.org/doc/stable/user/absolute_beginners.html
