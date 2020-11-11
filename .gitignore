@@ -1,5 +1,8 @@
 # IDE
-.vscode/
+# Ignore all of VSCode's configuration/workspace stuff...
+.vscode/*
+# ... except the run configurations
+!.vscode/launch.json
 
 # Misc
 examples/
