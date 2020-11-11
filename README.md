@@ -21,6 +21,8 @@ To make pylint recognise opencv subpackages, add the following to `settings.json
 "python.linting.pylintArgs": [ "--generate-members" ]
 ```
 
+Common importing problems: http://python-notes.curiousefficiency.org/en/latest/python_concepts/import_traps.html
+
 ## Useful links
 
 - OpenCV documentation: https://docs.opencv.org/4.4.0/index.html
