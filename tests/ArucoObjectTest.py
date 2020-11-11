@@ -15,12 +15,16 @@ import cv2.aruco as aruco
 # ArUco code width
 MARKER_WIDTH = 76
 
-marker = ArucoMarker.ArucoMarker(2, MARKER_WIDTH, 20)
+### Setup camera ###
+# Read and store the calibration information from Sample_Calibration
+CALIBRATION = np.load('tests/Calibration.npz') # Load the camera calibration values 
+CAMERA_MATRIX = CALIBRATION['CM'] # Camera matrix
+DIST_COEFFS = CALIBRATION['dist_coef'] # Distortion coefficients from the camera
+
+marker = ArucoMarker.ArucoMarker(2, MARKER_WIDTH, 20, CAMERA_MATRIX, DIST_COEFFS)
 
 marker.print()
 
 while True: # Forever
 
-    
-
-    marker.update()
+    marker.update(frame)
