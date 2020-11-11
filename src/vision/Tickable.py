@@ -5,6 +5,7 @@ class Tickable:
     tickables = []
 
     def __init__(self):
+        """Creates a new Tickable object"""
         Tickable.tickables.append(self)
     
     def update(self, frame):

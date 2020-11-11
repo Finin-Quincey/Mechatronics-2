@@ -62,7 +62,7 @@ while(True):
     # Convert the image from the camera to Gray scale
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-    Tickable.Tickable.update_all(gray) # Update all markers
+    Tickable.Tickable.update_all(gray) # Update all markers and the arena
 
     # Display the original frame in a window
     cv2.imshow('frame-image',frame)
@@ -70,11 +70,14 @@ while(True):
     # Stop the performance counter
     #end = time.perf_counter()
     
-    if(marker.visible):
-        print(f"Found marker at {arena.get_arena_coords(marker.position)}")
-    else:
-        print("Did not find marker")
+    sys.stdout.write("\033[K") # Clear to the end of line
     
+    # Marker relative position readout
+    if(marker.visible):
+        print(f"Found marker at {arena.get_arena_coords(marker.position)}", end="\r") # end="\r" makes it overwrite the previous line
+    else:
+        print("Did not find marker", end="\r") # Sad times :(
+
     # If the button q is pressed in one of the windows 
     if cv2.waitKey(20) & 0xFF == ord('q'):
         # Exit the While loop
