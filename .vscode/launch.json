@@ -9,21 +9,21 @@
             "type": "python",                           // No touchy
             "request": "launch",                        // Also no touchy
             "module": "tests.RelativeCoordsTest",       // The actual file (script, class or whatever) to run 
-            "cwd": "${workspaceFolder}"                 // Super important! Sets the Python search path to the workspace directory
+            "cwd": "${workspaceFolder}/src"             // Super important! Sets the Python search path to the src directory
         },
         {
             "name": "CalibrationChecker",
             "type": "python",
             "request": "launch",
             "module": "tests.CalibrationChecker",
-            "cwd": "${workspaceFolder}"
+            "cwd": "${workspaceFolder}/src"
         },
         {
             "name": "ArucoObjectTest",
             "type": "python",
             "request": "launch",
             "module": "tests.ArucoObjectTest",
-            "cwd": "${workspaceFolder}"
+            "cwd": "${workspaceFolder}/src"
         }
     ]
 }
