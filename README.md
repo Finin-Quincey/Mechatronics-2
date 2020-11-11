@@ -12,7 +12,7 @@ Code for the Mechatronics 2 assignment (Year 4 IDE) to build a robot contained i
 
 ## Run configurations
 
-See the [run configurations guide](run_configurations.md)
+See the [run configurations guide](run_configurations.md).
 
 ## Troubleshooting
 
