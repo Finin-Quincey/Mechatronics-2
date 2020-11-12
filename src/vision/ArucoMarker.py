@@ -22,7 +22,8 @@ class ArucoMarker(Tickable.Tickable):
         - i: The ID of the ArUco marker (as defined in the dictionary)
         - size: The width of the marker in mm
         - refresh_rate: The number of times to update the marker position per second, cannot be more than the camera fps
-        - 
+        - camera_matrix: The camera matrix from the camera calibration file
+        - dist_coef: The distortion coefficients from the camera calibration file
         """
         super().__init__() # Call super constructor to add it to list of things we can update
         self.id = i # The ID of the ArUco code to track
@@ -47,8 +48,8 @@ class ArucoMarker(Tickable.Tickable):
         
         self._prev_update_time = t # If we are updating, set the new prev update time
 
-        ### Detect ArUco Markers ###
-        # After the convertion to gray (line 35 of the original) run the detection function
+        # Detect aruco markers
+        # N.B. The frame should already have been converted to greyscale at this point
         corners, ids, rP = aruco.detectMarkers(frame, ArucoMarker.ARUCO_DICT)
 
         self.visible = False # Assume it's not visible until we find it
