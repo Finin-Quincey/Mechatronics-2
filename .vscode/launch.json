@@ -24,6 +24,13 @@
             "request": "launch",
             "module": "tests.ArucoObjectTest",
             "cwd": "${workspaceFolder}/src"
+        },
+        {
+            "name": "HoughLinesTest",
+            "type": "python",
+            "request": "launch",
+            "module": "tests.HoughLinesTest",
+            "cwd": "${workspaceFolder}/src"
         }
     ]
 }
