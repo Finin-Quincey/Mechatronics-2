@@ -22,6 +22,8 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
+SAFETY_RADIUS = 1 # For now...
+
 #### First step is creating a grid in graph form ####
 ## Manually define inputs from vision ##
 
@@ -40,28 +42,37 @@ for x in range(x_arena):
         arena_nodes.append([x,y])
 arena_nodes = np.array(arena_nodes)      
 #print(arena_nodes[0])
+print(arena_nodes)
 
 # Calculate vector direction of wall
 wall_direction = [wall_end[0]-wall_start[0], wall_end[1]-wall_start[1]]
 print(wall_direction)
 
-# Calculate lambda (A) in vector equation of line between wall and node
-numerator = np.dot((arena_nodes[0] - wall_start) , wall_direction)
-denominatior = (np.linalg.norm(wall_direction))**2
-A = np.array(numerator/denominatior)
-print(A)
+available_nodes = []
 
-# Using calculate lambda (A) in vector equation, state coordinate of point on wall
-point = wall_start + A * wall_direction
-print(point)
+for node in arena_nodes:
+    # Calculate lambda (A) in vector equation of line between wall and node
+    numerator = np.dot((node - wall_start) , wall_direction)
+    denominatior = (np.linalg.norm(wall_direction))**2
+    A = np.array(numerator/denominatior)
+    #print(A)
 
-# Look at equation of point on wall to a node (perpendicular - shortest distance)
-perpendicular_line = [point[0]-arena_nodes[0][0], point[1]-arena_nodes[0][1]]
-print(perpendicular_line)
+    # Using calculate lambda (A) in vector equation, state coordinate of point on wall
+    point = wall_start + A * wall_direction
+    #print(point)
 
-# Calculate length of perpendicular line between wall point and node
-perpendicular_line_length = np.linalg.norm(perpendicular_line)
-print(perpendicular_line_length)
+    # Look at equation of point on wall to a node (perpendicular - shortest distance)
+    perpendicular_line = [point[0]-node[0], point[1]-node[1]]
+    #print(perpendicular_line)
+
+    # Calculate length of perpendicular line between wall point and node
+    perpendicular_line_length = np.linalg.norm(perpendicular_line)
+    #print(perpendicular_line_length)
+
+    if perpendicular_line_length <= SAFETY_RADIUS:
+        available_nodes.append(node)
+
+print(available_nodes)
 
 
 
