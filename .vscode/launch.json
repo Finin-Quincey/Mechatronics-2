@@ -31,6 +31,13 @@
             "request": "launch",
             "module": "tests.HoughLinesTest",
             "cwd": "${workspaceFolder}/src"
+        },
+        {
+            "name": "robot_joystick",
+            "type": "python",
+            "request": "launch",
+            "module": "tests.robot_joystick",
+            "cwd": "${workspaceFolder}/src"
         }
     ]
 }
