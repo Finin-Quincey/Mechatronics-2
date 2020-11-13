@@ -20,3 +20,7 @@ class Arena(Tickable.Tickable):
         if(not self.origin.visible): print("Origin marker not visible!")
         result = [point[0] - self.origin.position[0], point[1] - self.origin.position[1]]
         return result
+
+    def get_walls(self)
+        """Returns a list of wall objects (in arena coordinates) that are currently visible in the arena"""
+        pass # TODO Write this
