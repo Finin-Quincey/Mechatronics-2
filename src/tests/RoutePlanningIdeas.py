@@ -16,6 +16,8 @@
 
 # Plot a route between start and target
 
+
+
 ##### Start of actual code #####
 import matplotlib.pyplot as plt
 import numpy as np
@@ -27,9 +29,9 @@ import numpy as np
 x_arena = 20 # Set x distance of arena to ...
 y_arena = 10 # Set y distance of arena to ...
 
-# Create arbitrary horizonal wall
-wall_1_start = [2,1] 
-wall_1_end = [12,5]
+# Create arbitrary wall
+wall_start = [2,1] 
+wall_end = [12,5]
 
 # Create grid of nodes 
 arena_nodes = []
@@ -37,27 +39,57 @@ for x in range(x_arena):
     for y in range(y_arena):
         arena_nodes.append([x,y])
 arena_nodes = np.array(arena_nodes)      
+#print(arena_nodes[0])
 
-print(arena_nodes[0])
-# Plot all intiial arena nodes
-for node in arena_nodes: # Look at each coodinate in turn
-    plt.plot(node[0],node[1],'o', color = 'black') # scatter plot the nodes
-#plt.show() # show plot in new figure
+# Calculate vector direction of wall
+wall_direction = [wall_end[0]-wall_start[0], wall_end[1]-wall_start[1]]
+print(wall_direction)
 
-# Create wall_1 vector
-# wall_vector = array([x2-x1, y2-y1])
-wall_direction_vector = np.array([wall_1_end[0]-wall_1_start[0], wall_1_end[1]-wall_1_start[1]])
-print(wall_direction_vector)
-#wall_vector = wall_1_start + A * wall_direction_vector
-#print(wall_direction_vector)
-#print(wall_vector)
-
-#numerator = (###)
-#numerator = (node - startPoint) dot wall direction vecoty
-numerator = np.dot((arena_nodes[0] - wall_1_start) , wall_direction_vector)
-denominatior = (np.linalg.norm(wall_direction_vector))**2
-A = numerator/denominatior
+# Calculate lambda (A) in vector equation of line between wall and node
+numerator = np.dot((arena_nodes[0] - wall_start) , wall_direction)
+denominatior = (np.linalg.norm(wall_direction))**2
+A = np.array(numerator/denominatior)
 print(A)
+
+# Using calculate lambda (A) in vector equation, state coordinate of point on wall
+point = wall_start + A * wall_direction
+print(point)
+
+# Look at equation of point on wall to a node (perpendicular - shortest distance)
+perpendicular_line = [point[0]-arena_nodes[0][0], point[1]-arena_nodes[0][1]]
+print(perpendicular_line)
+
+# Calculate length of perpendicular line between wall point and node
+perpendicular_line_length = np.linalg.norm(perpendicular_line)
+print(perpendicular_line_length)
+
+
+
+
+
+
+
+
+
+# # Plot all intiial arena nodes
+# for node in arena_nodes: # Look at each coodinate in turn
+#     plt.plot(node[0],node[1],'o', color = 'black') # scatter plot the nodes
+# #plt.show() # show plot in new figure
+
+# # Create wall_1 vector
+# # wall_vector = array([x2-x1, y2-y1])
+# wall_direction_vector = np.array([wall_end[0]-wall_start[0], wall_nd[1]-wall_start[1]])
+# print(wall_direction_vector)
+# #wall_vector = wall_1_start + A * wall_direction_vector
+# #print(wall_direction_vector)
+# #print(wall_vector)
+
+# #numerator = (###)
+# #numerator = (node - startPoint) dot wall direction vecoty
+# numerator = np.dot((arena_nodes[0] - wall_1_start) , wall_direction_vector)
+# denominatior = (np.linalg.norm(wall_direction_vector))**2
+# A = numerator/denominatior
+# print(A)
 
 
 # Find neighbours of nodes
