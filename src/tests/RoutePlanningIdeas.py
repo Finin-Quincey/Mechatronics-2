@@ -69,8 +69,16 @@ for node in arena_nodes:
 
     #print(f"node is {node}")
 
-    if perpendicular_line_length > SAFETY_RADIUS:
-        available_nodes.append([node[0],node[1]])
+    # Problem - this only works if the wall_start is the smallest x & y values, and wall_end is largest x & y value
+    # If the node is in the safety range of the wall in terms of x and y, check its not too close to wall
+    if node[0] >= (wall_start[0] - SAFETY_RADIUS) and node[0] <= (wall_end[0] + SAFETY_RADIUS):
+        if node[1] >= (wall_start[1] - SAFETY_RADIUS) and node[1] <= (wall_end[1] + SAFETY_RADIUS):
+            if perpendicular_line_length >= SAFETY_RADIUS:
+                available_nodes.append([node[0],node[1]])
+        else: 
+            available_nodes.append([node[0],node[1]])       
+    else:
+        available_nodes.append([node[0],node[1]])       
         
 #print(f"available nodes are {available_nodes}")
 
