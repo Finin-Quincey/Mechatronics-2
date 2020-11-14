@@ -1,96 +1,109 @@
-## Note, everything in arena coordinates ##
-# This code is given target location:
+##### RoutePlanningIdeas #####
+#### Initial attempt at Route Planning using A* method ####
 
-# target = [x,y]
-
-# This code will call up other functions to supply:
-
-# start_postion = [x,y]
-# pickup = [x,y]
-# mars_drop = [x,y]
-# galaxy_drop = [x,y]
-# milkyway_drop = [x,y]
-
-# wall1 = object
-# wall1 = [[x1,y1],[x2,y2]]
-
-# Plot a route between start and target
-
-##### Start of actual code #####
+### Import required libraries ###
 import matplotlib.pyplot as plt
 import numpy as np
 
-SAFETY_RADIUS = 1 # For now...
+### Manually write input values - these will be outputted from other code later on ###
+SAFETY_RADIUS = 1 # Arbitrary safety radius
+arena_size = [20, 10] # Arbitrary arena size
+wall_1 = [2, 1, 12, 5] # Arbitrary wall size [x0, y0, x1, y1]
+wall_2 = [5, 7, 2, 4]
+wall_3 = [0, 10, 0, 2]
 
-#### First step is creating a grid in graph form ####
-## Manually define inputs from vision ##
+## Create list of walls
+walls = [] # Initialise list of walls
+walls.append(wall_1) # Add walls to list of walls
+walls.append(wall_2) # Add walls to list of walls
+walls.append(wall_3) # Add walls to list of walls
+print(walls)
 
-# Create arbitrary arena
-x_arena = 20 # Set x distance of arena to ...
-y_arena = 10 # Set y distance of arena to ...
+### Step One - Establish grid ###
+arena_nodes = [] # Initialise list of grid nodes
+for x in range(arena_size[0] + 1): # For all intervals in x
+    for y in range(arena_size[1] + 1): # For all intervals in y
+        arena_nodes.append([x, y]) # Record x,y node coordinates
+arena_nodes = np.array(arena_nodes) # Make list an array for use in subsequent functions
 
-# Create arbitrary wall
-wall_start = [2,1] 
-wall_end = [12,5]
+### Step Two - Consider walls, therefore make new list of available nodes to move in
 
-# Create grid of nodes 
-arena_nodes = []
-for x in range(x_arena):
-    for y in range(y_arena):
-        arena_nodes.append([x,y])
-arena_nodes = np.array(arena_nodes)      
-#print(arena_nodes[0])
-print(arena_nodes)
+bad_nodes = []
 
-# Calculate direction vector of wall
-wall_direction = [wall_end[0]-wall_start[0], wall_end[1]-wall_start[1]]
-print(wall_direction)
+for wall in walls:
+    ## For reference, equation of a vector in the form: vector equation = position vector + A * direction vector
+    #                                                   wall_vector     = wall_position   + A * wall_direction
 
-available_nodes = []
-
-for node in arena_nodes:
-    # Calculate lambda (A) in vector equation of line between wall and node
-    numerator = np.dot((node - wall_start) , wall_direction)
-    denominatior = (np.linalg.norm(wall_direction))**2
-    A = np.array(numerator/denominatior)
-    #print(A)
-
-    # Using calculated lambda (A) in vector equation, state coordinate of point on wall
-    point = wall_start + A * wall_direction
-    #print(point)
-
-    # Look at line equation of point on wall to a node (perpendicular - shortest distance)
-    perpendicular_line = [point[0]-node[0], point[1]-node[1]]
-    #print(perpendicular_line)
-
-    # Calculate length of perpendicular line between wall point and node
-    perpendicular_line_length = np.linalg.norm(perpendicular_line)
-    #print(perpendicular_line_length)
-
-    #print(f"node is {node}")
-
-    # Problem - this only works if the wall_start is the smallest x & y values, and wall_end is largest x & y value
-    # If the node is in the safety range of the wall in terms of x and y, check its not too close to wall
-    if node[0] >= (wall_start[0] - SAFETY_RADIUS) and node[0] <= (wall_end[0] + SAFETY_RADIUS):
-        if node[1] >= (wall_start[1] - SAFETY_RADIUS) and node[1] <= (wall_end[1] + SAFETY_RADIUS):
-            if perpendicular_line_length >= SAFETY_RADIUS:
-                available_nodes.append([node[0],node[1]])
-        else: 
-            available_nodes.append([node[0],node[1]])       
+    ## Calculate direction vector of wall
+    # For reference, direction vector = [(x1 - x0), (y1 - y0)]
+    wall_direction = [wall[2]-wall[0], wall[3]-wall[1]]
+    print(wall_direction)
+    ## Establish x range of wall
+    # Find lower limit of x in wall: Look at x0 and x1, and find which is lower
+    if wall[0] <= wall[2]:
+        x_lower_boundary = wall[0] - SAFETY_RADIUS
+        x_upper_boundary = wall[2] + SAFETY_RADIUS
     else:
-        available_nodes.append([node[0],node[1]])       
+        x_lower_boundary = wall[2] - SAFETY_RADIUS
+        x_upper_boundary = wall[1] + SAFETY_RADIUS
+
+    # Repeat above for y range of wall
+    # Find lower limit of y in wall: Look at y0 and y1, and find which is lower
+    if wall[1] <= wall[3]:
+        y_lower_boundary = wall[1] - SAFETY_RADIUS
+        y_upper_boundary = wall[3] + SAFETY_RADIUS
+    else:
+        y_lower_boundary = wall[3] - SAFETY_RADIUS
+        y_upper_boundary = wall[1] + SAFETY_RADIUS    
+
+    ## Consider distances between node and wall
+    for node in arena_nodes: 
+        # Calculate lambda (A) in vector equation of line between wall and node
+        wall_start = [wall[0], wall[1]]
+        numerator = np.dot((node - wall_start), wall_direction)
+        denominator = (np.linalg.norm(wall_direction))**2
+        A = np.array(numerator/denominator)
+
+        # Using calculated lambda (A) in vector equation, state coordinate of point on wall
+        point = wall_start + A * wall_direction
+
+        # Look at line equation of point on wall to a node (perpendicular - shortest distance)
+        perpendicular_line = [point[0]-node[0], point[1]-node[1]]
+
+        # Calculate length of perpendicular line between wall point and node
+        perpendicular_line_length = np.linalg.norm(perpendicular_line)
+
+        # # Remove nodes that are too close to line within the x, y range of line (not infinite line)
+        # if node[0] >= x_lower_boundary and node[0] <= x_upper_boundary:
+        #     if node[1] >= y_lower_boundary and node[1] <= y_upper_boundary:
+        #         if perpendicular_line_length <= SAFETY_RADIUS:
+                    
+        #            # Find the node[0] and node[1] x,y coordinate in the available nodes array and remove it
+
+        # If the node is in the safety range of the wall in terms of x and y, check its not too close to wall
+        if node[0] >= x_lower_boundary and node[0] <= x_upper_boundary:
+            if node[1] >= y_lower_boundary and node[1] <= y_upper_boundary:
+                if perpendicular_line_length <= SAFETY_RADIUS:
+                    bad_nodes.append([node[0], node[1]])
+                    ###### THIS IS WHERE I MADE A LIST OF BAD NODES FOR EACH WALL ######
         
-#print(f"available nodes are {available_nodes}")
+        #     else: 
+        #         bad_nodes.append([node[0], node[1]])       
+        # else:
+        #     bad_nodes.append([node[0], node[1]])    
 
-for node in arena_nodes: # Look at each coodinate in turn
-    plt.plot(node[0],node[1],'o', color = 'black') # scatter plot of all nodes
+    wall_x = [wall[0], wall[2]]
+    wall_y = [wall[1], wall[3]]
+    plt.plot(wall_x, wall_y) # Plot wall
 
-for node in available_nodes: # Look at each coordinate in turn
+#### HERE I WANT TO SAY:
+#available_nodes = arena_nodes - bad_nodes
+
+# for node in available_nodes: # Look at each coodinate in turn
+#    plt.plot(node[0],node[1],'o', color = 'black') # scatter plot of all nodes
+
+for node in bad_nodes: # Look at each coordinate in turn
     plt.plot(node[0],node[1],'o', color = 'red') # scatter plot of available nodes
-
-wall_x = [wall_start[0], wall_end[0]] # Get wall x values
-wall_y = [wall_start[1], wall_end[1]] # Get wall y values
-plt.plot(wall_x, wall_y) # Plot wall
 
 plt.show() # Show plot in new figure
 
@@ -100,41 +113,48 @@ plt.show() # Show plot in new figure
 
 
 
-# # Plot all intiial arena nodes
-# for node in arena_nodes: # Look at each coodinate in turn
-#     plt.plot(node[0],node[1],'o', color = 'black') # scatter plot the nodes
-# #plt.show() # show plot in new figure
 
-# # Create wall_1 vector
-# # wall_vector = array([x2-x1, y2-y1])
-# wall_direction_vector = np.array([wall_end[0]-wall_start[0], wall_nd[1]-wall_start[1]])
-# print(wall_direction_vector)
-# #wall_vector = wall_1_start + A * wall_direction_vector
-# #print(wall_direction_vector)
-# #print(wall_vector)
 
-# #numerator = (###)
-# #numerator = (node - startPoint) dot wall direction vecoty
-# numerator = np.dot((arena_nodes[0] - wall_1_start) , wall_direction_vector)
-# denominatior = (np.linalg.norm(wall_direction_vector))**2
-# A = numerator/denominatior
+
+
+
+
+
+
+#### Mess below
+
+
+# available_nodes = arena_nodes
+# X = []
+# for node in bad_nodes_no_duplicates:
+#     X.append(np.where((arena_nodes[:,0] == node[0]) & (arena_nodes[:,1]==node[1])))
+# print(X)
+
+#print(available_nodes)
+
+# X = np.where((arena_nodes == (0, 1)).all(axis=1))
+# print(X)
+# for node in arena_nodes:
+#     for i in bad_nodes_no_duplicates:
+#         if (node[0] == i[0]) and (node[1] == i[1]):
+#             pass
+#         else:
+#             available_nodes.append(node)
+
+# available_nodes = np.array(available_nodes) # Make list an array for use in subsequent functions
+
+# for node in arena_nodes:
+#     for i in bad_nodes_no_duplicates:
+#         if (node[0] is not i[0]) and (node[1] is not i[1]):
+#             available_nodes.append(node)
+
+# available_nodes = np.array(available_nodes) # Make list an array for use in subsequent functions
+
+# print(available_nodes)
 # print(A)
+# print(node)
+# print(arena_nodes)
+# print(bad_nodes)
 
 
-# Find neighbours of nodes
-def neighbours(node): # Node is input
-    directions = [[1, 0], [0, 1], [-1, 0], [0, -1]] # Create list of directions: Step right, step up, step left, step down
-    result = [] # Initalise result
-    for direction in directions: # For each option in directions list
-        neighbour = [node[0] + directions[0], node[1] + directions[1]] # Look at node, and add direction x,y 
-        if neighbour in arena_nodes: # If the neighbour nodes are actually within the arena boundaries
-            result.append(neighbour) # Add them to the list off nodes
-    return result # Return result (list of node, now including neighbours)
-
-
-
-
-
-
-
-
+#available_nodes = arena_nodes - bad_nodes
