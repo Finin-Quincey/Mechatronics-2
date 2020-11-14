@@ -16,8 +16,6 @@
 
 # Plot a route between start and target
 
-
-
 ##### Start of actual code #####
 import matplotlib.pyplot as plt
 import numpy as np
@@ -44,7 +42,7 @@ arena_nodes = np.array(arena_nodes)
 #print(arena_nodes[0])
 print(arena_nodes)
 
-# Calculate vector direction of wall
+# Calculate direction vector of wall
 wall_direction = [wall_end[0]-wall_start[0], wall_end[1]-wall_start[1]]
 print(wall_direction)
 
@@ -57,11 +55,11 @@ for node in arena_nodes:
     A = np.array(numerator/denominatior)
     #print(A)
 
-    # Using calculate lambda (A) in vector equation, state coordinate of point on wall
+    # Using calculated lambda (A) in vector equation, state coordinate of point on wall
     point = wall_start + A * wall_direction
     #print(point)
 
-    # Look at equation of point on wall to a node (perpendicular - shortest distance)
+    # Look at line equation of point on wall to a node (perpendicular - shortest distance)
     perpendicular_line = [point[0]-node[0], point[1]-node[1]]
     #print(perpendicular_line)
 
@@ -69,12 +67,24 @@ for node in arena_nodes:
     perpendicular_line_length = np.linalg.norm(perpendicular_line)
     #print(perpendicular_line_length)
 
-    if perpendicular_line_length <= SAFETY_RADIUS:
-        available_nodes.append(node)
+    #print(f"node is {node}")
 
-print(available_nodes)
+    if perpendicular_line_length > SAFETY_RADIUS:
+        available_nodes.append([node[0],node[1]])
+        
+#print(f"available nodes are {available_nodes}")
 
+for node in arena_nodes: # Look at each coodinate in turn
+    plt.plot(node[0],node[1],'o', color = 'black') # scatter plot of all nodes
 
+for node in available_nodes: # Look at each coordinate in turn
+    plt.plot(node[0],node[1],'o', color = 'red') # scatter plot of available nodes
+
+wall_x = [wall_start[0], wall_end[0]] # Get wall x values
+wall_y = [wall_start[1], wall_end[1]] # Get wall y values
+plt.plot(wall_x, wall_y) # Plot wall
+
+plt.show() # Show plot in new figure
 
 
 
