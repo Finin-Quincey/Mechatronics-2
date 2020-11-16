@@ -5,28 +5,61 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-### Manually write input values - these will be outputted from other code later on ###
-SAFETY_RADIUS = 1 # Arbitrary safety radius
-arena_size = [20, 10] # Arbitrary arena size
-wall_1 = [2, 1, 12, 5] # Arbitrary wall size [x0, y0, x1, y1]
-wall_2 = [5, 7, 2, 4]
-wall_3 = [0, 10, 0, 2]
-wall_4 = [0, 8, 8, 1]
+### Manually write inputs - these will be output by vision code ###
+SAFETY_RADIUS = 150 # 150mm Acceptable distance between centre of sphere (robot) and wall/obstacles
+arena_size = [2500, 1500] # Arbitrary arena size 2500mm = 2.5m by 1500mm = 1.5m
+arena_step = 50 # Increment grid at 50mm = 5cm
 
-## Create list of walls
-walls = [] # Initialise list of walls
-walls.append(wall_1) # Add walls to list of walls
-walls.append(wall_2) # Add walls to list of walls
-walls.append(wall_3) # Add walls to list of walls
-walls.append(wall_4) # Add walls to list of walls
-print(walls)
+wall_count = 2 # Number of walls to test code
+walls = [[0, 0, 0, 0]] * wall_count # Initialise walls list
+# Load test walls, dependent on how many are being tested
+if wall_count == 0:
+    pass
+if wall_count >= 1:
+    walls[0] = ([0, 0, 2500, 1500])
+if wall_count >= 2:
+    walls[1] = ([0, 1500, 2500, 0])
+if wall_count >= 3:
+    walls[2] = ([2, 2, 2498, 1498])   
 
+print(walls)    
+
+#### Actual code ####
 ### Establish grid ###
-arena_nodes = [] # Initialise list of grid nodes
-for x in range(arena_size[0] + 1): # For all intervals in x
-    for y in range(arena_size[1] + 1): # For all intervals in y
-        arena_nodes.append([x, y]) # Record x,y node coordinates
+## Plot arena ##
+
+# Setup
+ARENA_COUNT = 4 # Number of walls to test code
+arena_lines = [[0, 0, 0, 0]] * ARENA_COUNT # Initialise arena_points list
+
+# Assign arena grid points
+arena_lines[0] = [0, 0, 0, arena_size[1]] # Bottom left corner
+arena_lines[1] = [0, arena_size[1], arena_size[0], arena_size[1]] # Top left corner
+arena_lines[2] = [arena_size[0], arena_size[1], arena_size[0], 0] # Top right corner
+arena_lines[3] = [arena_size[0], 0, 0, 0] # Bottom right corner
+
+# Plot arena lines (borders) between 2 corners
+for line in arena_lines:
+    x = [line[0], line[2]]
+    y = [line[1], line[3]]
+    plt.plot(x, y, 'b')
+
+## Find safe travel zones given arena borders ##
+
+# Setup grid point dimensions
+x_arena = list(range(0 + SAFETY_RADIUS, arena_size[0] + 1 - SAFETY_RADIUS, arena_step)) # Apply safety distance to arena edge in x
+y_arena = list(range(0 + SAFETY_RADIUS, arena_size[1] + 1 - SAFETY_RADIUS, arena_step)) # Apply safety distance to arena edge in y
+
+arena_nodes = [] # Initialise arena nodes (grid points)
+# Make grid points
+for x in x_arena:
+    for y in y_arena:
+        arena_nodes.append([x, y])
 arena_nodes = np.array(arena_nodes) # Make list an array for use in subsequent functions
+
+# Plot safe travel gridpoints given arena borders
+for node in arena_nodes: # Look at each coodinate in turn
+    plt.plot(node[0],node[1],'o', color = 'black') # scatter plot of all nodes
 
 available_nodes = []
 
@@ -43,7 +76,7 @@ for node in arena_nodes:
         ## Calculate direction vector of wall
         # For reference, direction vector = [(x1 - x0), (y1 - y0)]
         wall_direction = [wall[2]-wall[0], wall[3]-wall[1]]
-        print(wall_direction)
+        #print(wall_direction)
         ## Establish x range of wall
         # Find lower limit of x in wall: Look at x0 and x1, and find which is lower
         if wall[0] <= wall[2]:
@@ -93,13 +126,14 @@ for node in arena_nodes:
         available_nodes.append(node) 
 
 for node in available_nodes: # Look at each coodinate in turn
-    plt.plot(node[0],node[1],'o', color = 'black') # scatter plot of all nodes
+    plt.plot(node[0],node[1],'o', color = 'red') # scatter plot of all nodes
 
 for wall in walls:
     wall_x = [wall[0], wall[2]]
     wall_y = [wall[1], wall[3]]
     plt.plot(wall_x, wall_y) # Plot wall
 
+### Plot all above ###
 plt.show() # Show plot in new figure
 
 ##### NOTE TO SELF #####
