@@ -80,8 +80,8 @@ def send_destination(dest):
     y = (dest[1] / SPATIAL_RESOLUTION) * 255
 
     # Don't try and drive outside the arena!
-    if x < 0 or x > 255 raise ValueError("x coordinate out of bounds!")
-    if y < 0 or y > 255 raise ValueError("y coordinate out of bounds!")
+    if x < 0 or x > 255: raise ValueError("x coordinate out of bounds!")
+    if y < 0 or y > 255: raise ValueError("y coordinate out of bounds!")
 
     # Send the data to the arduino
     send_socket.sendto(bytes([MessageType.DESTINATION, x, y]), (ROBOT_UDP_IP, ROBOT_UDP_PORT))
@@ -114,12 +114,12 @@ def wait_for_response():
     Waits for a response from the Arudino and returns true if a 'confirm' (byte 1) response was received
     """
     # Wait for response
-    try
+    try:
         data, addr = recieve_socket.recvfrom(BUFFER_SIZE)
     except socket.timeout:
         logging.warn("Connection to arduino timed out!")
         return False # Return false if the connection timed out
         
-    if not addr == (ROBOT_UDP_IP, ROBOT_UDP_PORT) raise IOError("Received data from an unknown address!")
+    if not addr == (ROBOT_UDP_IP, ROBOT_UDP_PORT): raise IOError("Received data from an unknown address!")
 
     return data[0] == bytes(1) # Return true if we received a 1, false if we received a 0
