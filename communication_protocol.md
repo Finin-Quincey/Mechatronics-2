@@ -2,6 +2,8 @@
 
 Everything is **little-endian!**
 
+Bearings are specified in the range 0-255 (256 divisions in a full circle), where **0 is north** (positive y axis) and clockwise is positive.
+
 ## Joystick Control Mode
 _Drives the robot in real-time_
 
