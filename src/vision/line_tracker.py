@@ -19,8 +19,9 @@ import geom
 
 INTERP_FRAMES = 15 # The number of frames over which lines will be merged
 
-ANGLE_THRESHOLD = math.radians(10) # Lines within this angle of each other are considered parallel
+ANGLE_THRESHOLD = math.radians(5) # Lines within this angle of each other are considered parallel
 PROXIMITY_THRESHOLD = 10 # Parallel lines within this distance of each other are considered conincident
+WIDTH_THRESHOLD = 40 # Parallel, non-coincident lines within this distance of each other are considered two sides of a wall
 
 ### Variables ###
 
@@ -133,4 +134,43 @@ def check_coincidence(line1, line2):
     """
     Returns true if the two lines are approximately coincident (within the thresholds), false otherwise
     """
-    return geom.perpendicular_distance(line1, geom.midpoint(line2)) < PROXIMITY_THRESHOLD and geom.acute_angle_between(line1, line2) < ANGLE_THRESHOLD
+    return geom.perpendicular_distance(line1, geom.midpoint(line2)) < PROXIMITY_THRESHOLD and check_parallelness(line1, line2)
+
+def check_parallelness(line1, line2):
+    """
+    Returns true if the two lines are approximately parallel, false otherwise
+    """
+    return geom.acute_angle_between(line1, line2) < ANGLE_THRESHOLD
+
+def locate_centrelines(lines):
+    """
+    Locates pairs of parallel lines and returns an array of the centrelines between each pair
+    """
+    centrelines = np.zeros((0, 4)) # Initialise array to store centrelines
+
+    # This iteration logic works much like the logic above
+    # This time all the lines are rectified already
+    while len(lines) > 0:
+
+        ref_line = lines[0, :] # Take the next remaining line as a reference to compare the rest to
+        lines = np.delete(lines, 0, axis = 0)
+
+        closest_line = None
+        closest_distance = WIDTH_THRESHOLD
+
+        i = 0
+        while i < len(lines):
+            
+            line = lines[i]
+
+            if check_parallelness(ref_line, line) and geom.perpendicular_distance(ref_line, geom.midpoint(line)) < closest_distance:
+                closest_line = line
+                lines = np.delete(lines, i, axis = 0)
+                break
+
+            i += 1
+
+        if closest_line is not None:
+            centrelines = np.append(centrelines, [geom.equidistant(ref_line, closest_line)], axis = 0)
+
+    return centrelines

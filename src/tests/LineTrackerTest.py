@@ -68,11 +68,12 @@ while(True):
 
     # Update line tracker
     lines = line_tracker.update(out)
+    lines = line_tracker.locate_centrelines(lines)
 
     if lines is not None: # If we found some lines
         # Loop through the lines and draw them
         for line in lines:
-            frame = cv2.line(frame, (int(line[0]), int(line[1])), (int(line[2]), int(line[3])), (0, 255, 0), 2)
+            frame = cv2.line(frame, (int(line[0]), int(line[1])), (int(line[2]), int(line[3])), (0, 0, 255), 2)
 
     # Display the original frame in a window
     cv2.imshow('frame-image', frame)
