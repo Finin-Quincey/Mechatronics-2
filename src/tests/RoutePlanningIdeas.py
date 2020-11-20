@@ -21,11 +21,11 @@ markers = [[0, 0, 0]] * marker_count # Initialise list
 if marker_count == 0: # If no markers
     markers = [] # Empty list
 if marker_count >= 1: # If 1 or more marker
-    markers[0] = [0, 0, 1] # Assign x0, y0, ID 
+    markers[0] = [1203, 600, 1] # Assign x0, y0, ID 
 if marker_count >= 2: # If 1 or more marker
-    markers[1] = [0, 0, 2] # Assign x1, y1, ID
+    markers[1] = [490, 790, 2] # Assign x1, y1, ID
 if marker_count >= 3: # If 1 or more marker
-    markers[2] = [0, 0, 3] # Assign x2, y2, ID  
+    markers[2] = [2289, 300, 3] # Assign x2, y2, ID  
 # ...
 
 ### Walls ###
@@ -48,7 +48,8 @@ def get_coords():
         - M_O [x0,y0]
         - Markers [x0,y0]
         - Walls [x0,y0,x1,y1]
-        ALSO NEEDS TO CHECK IF WALL_E HAS ARRIVED ON SCENE"""
+        ALSO NEEDS TO CHECK IF WALL_E HAS ARRIVED ON SCENE
+        Also averages frames to see if WallE is moving"""
     ### Arena & Markers & Walls ###
     return arena_size, M_O, markers, walls
 
@@ -75,6 +76,9 @@ def wheres_M_O():
     ### Establish grid ### 
     nodes, grid = establish_grid(arena_size)
 
+    ### Round markers to nodes ###
+
+
     ### Process coordinates ###
     ## If M_O close to a marker ##
     # M_O at marker "X"
@@ -84,7 +88,7 @@ def wheres_M_O():
     return limbo # Set as this for now
 
 ################################################## Mission Control General Command ######################################################
-def M_O_go_here(target):
+def M_O_go_here(ID):
     """Mission Control will call up this function to give M_O commands.
         Function needs to communicate with Vision to get coords:
         - M_O [x0,y0]
@@ -105,14 +109,28 @@ def M_O_go_here(target):
     ### Establish grid ### 
     nodes, grid = establish_grid(arena_size)
 
+    ### Round markers to grid ###
+    markers = round_to_node(markers)
+    
     ### Find safe travel zones ###
     nodes_safe, grid = find_safe_zone(arena_size, walls, grid)
 
+    ### Convert ID to target location ###
+    target = [0, 0]
+    #print(markers)
+
+    for marker in markers:
+        #print(marker)
+        print(ID)
+        print(marker[2])
+        if marker[2] == ID:
+            
+            target[0] = marker[0]
+            target[1] = marker[1]
+            #print('X')
+
     ### Find route between M_O and target ###
     route = a_star(M_O, target, grid)
-
-
-
 
     for node in nodes:
         plt.plot(node[0], node[1], '.', color='yellow')
@@ -120,7 +138,11 @@ def M_O_go_here(target):
     for node in nodes_safe:
         plt.plot(node[0], node[1], '.', color='blue')
 
+    for marker in markers:
+        plt.plot(marker[0], marker[1], 'o', color='orange')
+
     plt.plot(M_O[0], M_O[1], 'x', color='black')
+
     plt.plot(target[0], target[1], 'x', color='red')
     
     for step in route:
@@ -158,7 +180,23 @@ def establish_grid(arena_size):
 
     return nodes, grid
 
-    ################################################## Find Safe Zone ##################################################
+################################################## Round Markers to Nodes ##################################################
+def round_to_node(markers):
+    """ """
+    new_markers = []
+    print(markers)
+    #int(arena_step * round(float(x)/arena_step))
+    for marker in markers:
+        new_marker = []
+        new_marker = marker[0]//STEP * STEP, marker[1]//STEP*STEP, marker[2]
+        new_markers.append(new_marker)
+
+    return new_markers
+    
+# def round_to_node(x):
+#     return int(arena_step * round(float(x)/arena_step))
+
+################################################## Find Safe Zone ##################################################
 
 def find_safe_zone(arena_size, walls, grid):
     """This function takes the established grid, and assigns a 0 value to all the safe travel zones.
@@ -307,14 +345,10 @@ def return_route(current_grid_point):
         current = current.parent
     route_grid[::-1]  # Return reversed path 
 
-    print(route_grid)
-
     for step in route_grid:
         step = convert_from_grid(step)
         route_nodes.append(step)
     
-    print('X')
-    print(route_nodes)
     return route_nodes
 
 def a_star(M_O, target, grid):
@@ -435,6 +469,6 @@ def convert_from_nodes(point):
 
 ################################################## Testing ##################################################
 
-target = [250, 800]
-M_O_go_here(target)
+ID = 2
+M_O_go_here(ID)
 
