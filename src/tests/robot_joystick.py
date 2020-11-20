@@ -4,6 +4,7 @@ import socket   # This library will allow you to communicate over the network
 import time     # This library will allow us to access the system clock for pause/sleep/delay actions
 import logging  # This library will offer us a different method to print information on the terminal (better for debugging purposes)
 import cv2      # Literally just using this for key presses
+import sys
 
 ### Constants ###
 
@@ -20,11 +21,13 @@ KEY_D = ord('d')
 KEY_Q = ord('q')
 
 # This is the IP address of the machine that the data will be send to
+# N.B. when on legacy at uni, run simulink to get the IP of the arduino
 #ROBOT_UDP_IP = "138.38.228.186"
 #ROBOT_UDP_IP = "138.38.228.190"
-ROBOT_UDP_IP = "192.168.0.169"
+ROBOT_UDP_IP = "138.38.229.150" # Wall-e at uni
+#ROBOT_UDP_IP = "192.168.0.169"  # Wall-e at uni
 
-# This is the RENOTE port the machine will reply on (on that machine this is the value for the LOCAL port)
+# This is the REMOTE port the machine will reply on (on that machine this is the value for the LOCAL port)
 ROBOT_UDP_PORT = 50001
 
 ### Initialisation ###

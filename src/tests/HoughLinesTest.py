@@ -1,5 +1,4 @@
-##### Calibration_Checker with Objects #####
-#### This code ouputs ArUco code tracking data based on the Jypyter calibration to check ####
+##### Hough Line Transform Test #####
 
 ### Import required libraries ###
 # This is the vision library OpenCV
@@ -10,6 +9,8 @@ import numpy as np
 import time
 # Import arUco code library
 import cv2.aruco as aruco
+
+import geom
 
 ### Setup camera ###
 # Read and store the calibration information from Sample_Calibration
@@ -63,7 +64,7 @@ while(True):
     # Stop the performance counter
     #end = time.perf_counter()
 
-    # If the button q is pressed in one of the windows 
+    # If the button q is pressed in one of the windows
     if cv2.waitKey(20) & 0xFF == ord('q'):
         # Exit the While loop
         break

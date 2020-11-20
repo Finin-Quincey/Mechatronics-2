@@ -38,6 +38,13 @@
             "request": "launch",
             "module": "tests.robot_joystick",
             "cwd": "${workspaceFolder}/src"
+        },
+        {
+            "name": "LineTrackerTest",
+            "type": "python",
+            "request": "launch",
+            "module": "tests.LineTrackerTest",
+            "cwd": "${workspaceFolder}/src"
         }
     ]
 }
