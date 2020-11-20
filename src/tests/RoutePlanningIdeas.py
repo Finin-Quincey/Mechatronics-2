@@ -38,7 +38,7 @@ if wall_count >= 2:
 if wall_count >= 3:
     walls[2] = ([2, 2, 2498, 1498])   
 
-#print(walls)    
+print(walls)    
 
 #### Actual code ####
 ### Establish grid ###
@@ -135,10 +135,10 @@ for node in arena_nodes_safe:
         if y_upper_boundary > arena_size[1]:
             y_upper_boundary = arena_size[1]     
 
-        print(f" xLowerBoundary = {x_lower_boundary}")
-        print(f" xUpperBoundary = {x_upper_boundary}")
-        print(f" yLowerBoundary = {y_lower_boundary}")
-        print(f" yUpperBoundary = {y_upper_boundary}")
+        # print(f" xLowerBoundary = {x_lower_boundary}")
+        # print(f" xUpperBoundary = {x_upper_boundary}")
+        # print(f" yLowerBoundary = {y_lower_boundary}")
+        # print(f" yUpperBoundary = {y_upper_boundary}")
 
         # Calculate lambda (A) in vector equation of line between wall and node
         wall_start = [wall[0], wall[1]]
