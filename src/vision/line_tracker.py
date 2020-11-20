@@ -82,7 +82,7 @@ def update(frame):
 
         # Choose which axis to compare in based on the gradient of the reference line (avoids issues with vertical lines)
         # We need not actually calculate the gradient though, we only care whether the line is more horizontal or vertical
-        compare_y = ref_line[3] - ref_line[1] > ref_line[2] - ref_line[0]
+        compare_y = abs(ref_line[3] - ref_line[1]) > abs(ref_line[2] - ref_line[0])
 
         coincident = np.zeros((0, 4)) # Initialise array to store all the lines that are coincident
 

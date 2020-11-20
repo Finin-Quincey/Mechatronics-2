@@ -47,6 +47,9 @@ while(True):
     # Capture current frame from the camera
     ret, frame = video_capture.read()
 
+    # Unlike the aruco marker detection, HLT doesn't do this automatically so we need to do it first
+    frame = cv2.undistort(frame, CAMERA_MATRIX, DIST_COEFFS)
+
     # Edge detection
     edges = cv2.Canny(frame, 50, 200, apertureSize = 3)
 
@@ -68,11 +71,17 @@ while(True):
 
     # Update line tracker
     lines = line_tracker.update(out)
-    lines = line_tracker.locate_centrelines(lines)
 
     if lines is not None: # If we found some lines
         # Loop through the lines and draw them
         for line in lines:
+            frame = cv2.line(frame, (int(line[0]), int(line[1])), (int(line[2]), int(line[3])), (255, 0, 0), 2)
+
+    centrelines = line_tracker.locate_centrelines(lines)
+
+    if centrelines is not None: # If we found some lines
+        # Loop through the lines and draw them
+        for line in centrelines:
             frame = cv2.line(frame, (int(line[0]), int(line[1])), (int(line[2]), int(line[3])), (0, 0, 255), 2)
 
     # Display the original frame in a window

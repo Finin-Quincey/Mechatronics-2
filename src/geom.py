@@ -44,22 +44,22 @@ def x_rectify(line):
     """
     Returns a new line with the start and end swapped if necessary so that the x component is positive
     """
-    if line[2] < line[0]: return [line[2], line[3], line[0], line[1]]
+    if line[2] < line[0]: return np.array([line[2], line[3], line[0], line[1]])
     else: return line
 
 def y_rectify(line):
     """
     Returns a new line with the start and end swapped if necessary so that the y component is positive
     """
-    if line[3] < line[1]: return [line[2], line[3], line[0], line[1]]
+    if line[3] < line[1]: return np.array([line[2], line[3], line[0], line[1]])
     else: return line
 
 def rectify(line):
     """
     Returns a new line with the start and end swapped if necessary so that x or y component with the largest magnitude is positive
     """
-    dx = line[2] - line[0]
-    dy = line[3] - line[1]
+    dx = abs(line[2] - line[0])
+    dy = abs(line[3] - line[1])
     if dy > dx: return y_rectify(line)
     elif dx > dy: return x_rectify(line)
     else: return line # If the line is exactly diagonal then leave it as-is
