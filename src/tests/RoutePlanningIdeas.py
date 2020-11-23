@@ -13,7 +13,7 @@ y_length = 1500 # y - dimension
 arena_size = [x_length, y_length] # Create list
 
 ### M_O ###
-M_O = [2150, 1150] # Position of robot M_O found by Vision
+M_O = [2350, 150] # Position of robot M_O found by Vision
 
 ### Markers ###
 marker_count = 3 # Number of markers to test
@@ -21,9 +21,9 @@ markers = [[0, 0, 0]] * marker_count # Initialise list
 if marker_count == 0: # If no markers
     markers = [] # Empty list
 if marker_count >= 1: # If 1 or more marker
-    markers[0] = [1203, 600, 1] # Assign x0, y0, ID 
+    markers[0] = [1203, 1198, 1] # Assign x0, y0, ID 
 if marker_count >= 2: # If 1 or more marker
-    markers[1] = [490, 790, 2] # Assign x1, y1, ID
+    markers[1] = [150, 250, 2] # Assign x1, y1, ID
 if marker_count >= 3: # If 1 or more marker
     markers[2] = [2289, 300, 3] # Assign x2, y2, ID  
 # ...
@@ -34,9 +34,9 @@ walls = [[0, 0, 0, 0]] * wall_count # Initialise list
 if wall_count == 0: # If no walls
     walls = [] # Empty list
 if wall_count >= 1: # If 1 or more wall
-    walls[0] = [150, 150, 500, 500] # Assign x[0][0], y[0][0], x[0][1], y[0][1] 
+    walls[0] = [500, 250, 500, 500] # Assign x[0][0], y[0][0], x[0][1], y[0][1] 
 if wall_count >= 2: # If 1 or more wall
-    walls[1] = [890, 450, 620, 989] # Assign x[1][0], y[1][0], x[1][1], y[1][1] 
+    walls[1] = [700, 700, 2000, 900] # Assign x[1][0], y[1][0], x[1][1], y[1][1] 
 if wall_count >= 3: # If 1 or more wall
     walls[2] = [0, 0, 3, 3] # Assign x[2][0], y[2][0], x[2][1], y[2][1] 
 # ...
@@ -110,27 +110,30 @@ def M_O_go_here(ID):
     nodes, grid = establish_grid(arena_size)
 
     ### Round markers to grid ###
-    markers = round_to_node(markers)
+    markers = round_markers_to_node(markers)
+
+    ### Round M_O to grid ###
+    M_O = round_robot_to_node(M_O)
     
     ### Find safe travel zones ###
     nodes_safe, grid = find_safe_zone(arena_size, walls, grid)
 
-    ### Convert ID to target location ###
-    target = [0, 0]
-    #print(markers)
+    print(f"These are the safe nodes = {nodes_safe}")
 
+    ### Convert ID to target location ###
+    target = [0, 0] # Intialist target
     for marker in markers:
-        #print(marker)
-        print(ID)
-        print(marker[2])
         if marker[2] == ID:
-            
             target[0] = marker[0]
             target[1] = marker[1]
-            #print('X')
 
     ### Find route between M_O and target ###
     route = a_star(M_O, target, grid)
+
+    ### Get steps from route ###
+    steps = get_steps(route)
+
+    print(f" This is the Route: {route}")
 
     for node in nodes:
         plt.plot(node[0], node[1], '.', color='yellow')
@@ -139,7 +142,8 @@ def M_O_go_here(ID):
         plt.plot(node[0], node[1], '.', color='blue')
 
     for marker in markers:
-        plt.plot(marker[0], marker[1], 'o', color='orange')
+        plt.plot(marker[0], marker[1], 'o', color='green')
+
 
     plt.plot(M_O[0], M_O[1], 'x', color='black')
 
@@ -147,6 +151,9 @@ def M_O_go_here(ID):
     
     for step in route:
         plt.plot(step[0], step[1], '*', color='magenta')
+
+    for step in steps:
+        plt.plot(step[0], step[1], 'o', color='red')
 
     plt.show()
 
@@ -181,20 +188,35 @@ def establish_grid(arena_size):
     return nodes, grid
 
 ################################################## Round Markers to Nodes ##################################################
-def round_to_node(markers):
+def round_markers_to_node(markers):
     """ """
     new_markers = []
-    print(markers)
-    #int(arena_step * round(float(x)/arena_step))
+    print(f"Original markers = {markers}")
+    
+    # for marker in markers:
+    #     new_marker = []
+    #     new_marker = marker[0]//STEP * STEP, marker[1]//STEP * STEP, marker[2]
+    #     new_markers.append(new_marker)
+
     for marker in markers:
         new_marker = []
-        new_marker = marker[0]//STEP * STEP, marker[1]//STEP*STEP, marker[2]
+        new_marker = STEP * round(marker[0] / STEP), STEP * round(marker[1] / STEP), marker[2]
         new_markers.append(new_marker)
+    
+    print(f"New markers = {new_markers}")
 
     return new_markers
     
-# def round_to_node(x):
-#     return int(arena_step * round(float(x)/arena_step))
+def round_robot_to_node(robot_coords):
+    """ """
+    print(f"Initial Robot Coords = {robot_coords}")
+    
+    #new_robot_coords = robot_coords[0]//STEP * STEP, robot_coords[1]//STEP * STEP
+    new_robot_coords = STEP * round(robot_coords[0] / STEP), STEP * round(robot_coords[1] / STEP)
+
+    print(f"New Robot Coords = {new_robot_coords}")
+
+    return new_robot_coords
 
 ################################################## Find Safe Zone ##################################################
 
@@ -343,13 +365,18 @@ def return_route(current_grid_point):
     while current is not None:
         route_grid.append(current.position)
         current = current.parent
-    route_grid[::-1]  # Return reversed path 
+    #print(f"route_grid = {route_grid}")
 
     for step in route_grid:
         step = convert_from_grid(step)
         route_nodes.append(step)
-    
-    return route_nodes
+    route_nodes.reverse()
+    #route_nodes[::-1]
+
+    #print(f"route_nodes = {route_nodes}")
+    safe_corners = []
+
+    return route_nodes, safe_corners
 
 def a_star(M_O, target, grid):
     """ """
@@ -357,8 +384,8 @@ def a_star(M_O, target, grid):
     M_O = convert_from_nodes(M_O)
     target = convert_from_nodes(target)
 
-    print(M_O)
-    print(target)
+    print(f"M_O = {M_O}")
+    print(f"target = {target}")
     
     ### Create start grid point = M_O and End grid point = target ####
     start_grid_point = grid_point(None, M_O) # M_O has no parent
@@ -378,7 +405,7 @@ def a_star(M_O, target, grid):
 
     ### Adding a stop condition ###
     iterations = 0 # Initalise number of iterations completed
-    max_iterations = len(grid[0]) * len(grid) // 2 # If every node has been checked and no solution found, stop
+    max_iterations = len(grid[0]) * len(grid) # If every node has been checked and no solution found, stop
         #max_iterations = (len(grid[0]) * len(grid) // 2)
 
     #allow_diagonal_movement
@@ -396,7 +423,8 @@ def a_star(M_O, target, grid):
         if iterations > max_iterations:
             ## Return route found up to this point ## - CHANGE THIS LATER, IF FAILURE, SHOULD TRY TO MOVE SOMEWHERE ELSE
             warn("Route not found, too many iterations")
-            return return_route(current_grid_point)   
+            route, safe_corners = return_route(current_grid_point)   
+            return route
 
         ## Remove the current grid point from the Open List (to assess list) ##
         current_grid_point = heapq.heappop(open_list)
@@ -406,7 +434,8 @@ def a_star(M_O, target, grid):
 
         ## Check if target reached, if so return the route ##
         if current_grid_point == end_grid_point:
-            return return_route(current_grid_point)
+            route, safe_corners = return_route(current_grid_point)   
+            return route
 
         ## Generate children (adjacent grid points to current based on direction options) ##
         children = [] # Initilise list of grid points
@@ -452,6 +481,32 @@ def a_star(M_O, target, grid):
 
     warn("Route has not been found")
     return None
+
+################################################## Get steps from Route ##################################################
+def get_steps(route):
+    #for node in route[1:]:
+    steps = []
+    I = list(range(1, (len(route) - 1)))
+
+    for i in I:
+        #print(f"This is current i = {i}")
+        x_current_jump = route[i][0] - route[i-1][0] 
+        y_current_jump = route[i][1] - route[i-1][1] 
+
+        x_next_jump = route[i+1][0] - route[i][0]
+        y_next_jump = route[i+1][1] - route[i][1]
+
+        if x_current_jump != x_next_jump or y_current_jump != y_next_jump:
+            step = route[i][0], route[i][1]
+            #print(f"This is current step = {step}")
+            steps.append(step)
+
+    steps.append([route[-1][0], route[-1][1]])
+
+    print(f" These are the steps = {steps}")
+    return steps
+
+
 
 ################################################## Convert from grid to nodes ##################################################
 
