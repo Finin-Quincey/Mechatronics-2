@@ -1,251 +1,208 @@
-##### Route Planning Code #####
-#### Import libraries ####
+#####  #####  #####  Route Planning Code  #####  #####  #####
+
+#####  #####  Import required libraries  ##### #####
 import matplotlib.pyplot as plt
 import numpy as np
-from warnings import warn
+import math
 import heapq
+from warnings import warn
 
-################################################## Fake Vision Outputs ##################################################
-### Arena ###
-## Arbitrary test setup ## –> EDIT THIS
-x_length = 2500 # x - dimension
-y_length = 1500 # y - dimension
-arena_size = [x_length, y_length] # Create list
+#####  #####  Make a fake Vision output for testing  ##### #####
 
-### M_O ###
-M_O = [2350, 150] # Position of robot M_O found by Vision
+#####  Arena  #####
+x_length = 2500 # x dimension of floorplan - EDIT THIS
+y_length = 2500 # y dimension of floorplan - EDIT THIS
+arena_size = [x_length, y_length] # Create list in Vision output form
 
-### Markers ###
-marker_count = 3 # Number of markers to test
+#####  M_O  #####
+M_O = [2300, 250, 0] # M_O's initial position coord and ID - EDIT THIS
+
+#####  Markers  #####
+marker_count = 3 # Number of markers to test - EDIT THIS
 markers = [[0, 0, 0]] * marker_count # Initialise list
-if marker_count == 0: # If no markers
-    markers = [] # Empty list
+if marker_count == 0: # If not markers...
+    markers = [] # Empty list
 if marker_count >= 1: # If 1 or more marker
-    markers[0] = [1203, 1198, 1] # Assign x0, y0, ID 
-if marker_count >= 2: # If 1 or more marker
-    markers[1] = [150, 250, 2] # Assign x1, y1, ID
-if marker_count >= 3: # If 1 or more marker
-    markers[2] = [2289, 300, 3] # Assign x2, y2, ID  
-# ...
+    markers[0] = M_O # Initiate list with M_O's coords and ID
+if marker_count >=2: # If 2 or more marker
+    markers[1] = [1500, 1700, 1] # Assign [x,y,ID] of marker - EDIT THIS
+if marker_count >=3: # If 3 or more marker
+    markers[2] = [2000, 2000, 2] # Assign [x,y,ID] of marker - EDIT THIS
+# ... if more markers to test
 
-### Walls ###
-wall_count = 3 # Number of walls to test
+#####  Walls  #####
+wall_count = 4 # Number of walls to test - EDIT THIS
 walls = [[0, 0, 0, 0]] * wall_count # Initialise list
-if wall_count == 0: # If no walls
+if wall_count == 0: # If no walls...
     walls = [] # Empty list
 if wall_count >= 1: # If 1 or more wall
-    walls[0] = [500, 250, 500, 500] # Assign x[0][0], y[0][0], x[0][1], y[0][1] 
+    walls[0] = [500, 300, 2500, 500] # Assign x[0][0], y[0][0], x[0][1], y[0][1]  [500, 500, 700, 2000]
 if wall_count >= 2: # If 1 or more wall
-    walls[1] = [700, 700, 2000, 900] # Assign x[1][0], y[1][0], x[1][1], y[1][1] 
+    walls[1] = [0, 500, 1750, 1000] # Assign x[1][0], y[1][0], x[1][1], y[1][1]   [1200, 1000, 1300, 500]
 if wall_count >= 3: # If 1 or more wall
-    walls[2] = [0, 0, 3, 3] # Assign x[2][0], y[2][0], x[2][1], y[2][1] 
-# ...
+    walls[2] = [400, 1000, 2300, 1900] # Assign x[2][0], y[2][0], x[2][1], y[2][1]    [700, 700, 2300, 1700]
+if wall_count >= 4: # If 1 or more wall
+    walls[3] = [300, 2200, 2300, 1700] # Assign x[2][0], y[2][0], x[2][1], y[2][1]    [700, 700, 2300, 1700]
+# ... if more walls to test
 
-### Fake Vision Output Function ###
+##### wall_E? #####
+wall_E_check = "Clear" # Is wall_E there? - EDIT THIS
+#wall_E_check = "Moving"
+#wall_E_check = "Stopped"
+
+#####  Fake Vision Outputs  #####
 def get_coords(): 
     """Route Planner will call up this function (in Vision) to return cords:
-        - Arena_size [xEnd, yEnd]
-        - M_O [x0,y0]
-        - Markers [x0,y0]
-        - Walls [x0,y0,x1,y1]
-        ALSO NEEDS TO CHECK IF WALL_E HAS ARRIVED ON SCENE
-        Also averages frames to see if WallE is moving"""
-    ### Arena & Markers & Walls ###
-    return arena_size, M_O, markers, walls
+        - arena_size [xEnd, yEnd]
+        - markers [x0, y0, ID] 1st index, i.e. [0], is M_O
+        - walls [x0, y0, x1, y1]
+        - wall_E_check = "Clear" or "Moving" or "Stopped" """
 
-################################################## Actual Code ##################################################
-### Set constants ###
-STEP = 50 # Nodes are 50mm apart
-SAFETY_RADIUS = 150 # Centre of sphere (M_O) always at least 150mm away from centre of obstacle
+    # Return fake outputs of Vision
+    return arena_size, markers, walls, wall_E_check
 
-################################################## Mission Control Kick-Off ##################################################
-def wheres_M_O():    
-    """Mission Control will call up this function to kick off logic.
-        Function needs to communicate with Vision to get coords:
-        - Arena_size [xEnd, yEnd]
-        - M_O [x0,y0]
-        - Markers [x0,y0]
-        ~ Walls [x0,y0,x1,y1] - Uneeded for this, but standard Vision output
-        Function then returns:
-        - M_O in limbo
-        - OR, M_O at marker "X" """ 
+#####  #####  Actual Code  #####  #####
 
-    ### Get coordinates from Vision ### 
-    arena_size, M_O, markers, walls = get_coords()
+#####  Set constants  #####  
+STEP = 50 # Distance between nodes (mm)
+SAFETY_RADIUS = 140 # Distance between centre of M_O and obstacle (mm)
+PROXIMITY_RADIUS = math.sqrt(2 * STEP ** 2) # Centre of M_O to marker (mm) - made so can be any adjacent node
 
-    ### Establish grid ### 
-    nodes, grid = establish_grid(arena_size)
-
-    ### Round markers to nodes ###
-
-
-    ### Process coordinates ###
-    ## If M_O close to a marker ##
-    # M_O at marker "X"
-
-    ## If M_O is not close to marker ##
-    # M_O in limbo
-    return limbo # Set as this for now
-
-################################################## Mission Control General Command ######################################################
+#####  Mission Control Normal Mode  #####  
 def M_O_go_here(ID):
-    """Mission Control will call up this function to give M_O commands.
-        Function needs to communicate with Vision to get coords:
-        - M_O [x0,y0]
-        - Markers [x0,y0]
-        - Walls [x0,y0,x1,y1]
-        Function calculates route in steps
-        Function then tells Comms to move M_O in steps:
-        - M_O here (constantly updating)
-        - Go to step 1 
-        - Confirm at step 1
-        - Go to step 2, etc. till at target
-        Function then returns location of M_O:
-        - Marker "X" """
-    
-    ### Get coordinates from Vision ### 
-    arena_size, M_O, markers, walls = get_coords()
+    """
+    1. Look at Vision outputs 
+    2. Establish where M_O is
+    3. If M_O at target, skip 
+        4. Or if M_O not at target, route plan to target, output steps
+            5. If unable to route plan to target:
+                Route plan to nearest corner, then to target, output steps
+                    If still a fail, skip
+    4. Establish where M_O is
+        Repeat above... 
 
-    ### Establish grid ### 
+    All the while, check if Wall_E has arrived """
+
+    ## 1. Look at Vision outputs
+    arena_size, markers, walls, wall_E_check = get_coords()
+
+    ## 2. Establish where M_O is
+    # Establish grid 
     nodes, grid = establish_grid(arena_size)
 
-    ### Round markers to grid ###
-    markers = round_markers_to_node(markers)
-
-    ### Round M_O to grid ###
-    M_O = round_robot_to_node(M_O)
-    
-    ### Find safe travel zones ###
-    nodes_safe, grid = find_safe_zone(arena_size, walls, grid)
-
-    print(f"These are the safe nodes = {nodes_safe}")
-
-    ### Convert ID to target location ###
-    target = [0, 0] # Intialist target
+    # Round markers to nodes, and subsequently grid
+    rounded_markers = []
     for marker in markers:
-        if marker[2] == ID:
-            target[0] = marker[0]
-            target[1] = marker[1]
+        rounded_marker = round_marker_to_node(marker)
+        rounded_markers.append(rounded_marker)
 
-    ### Find route between M_O and target ###
-    route = a_star(M_O, target, grid)
+    # Assess distance between M_O and other markers
+    index = list(range(1, len(rounded_markers)))
+    location = []
+    for i in index:
+        distance = math.sqrt(((rounded_markers[i][0] - rounded_markers[0][0]) ** 2) + ((rounded_markers[i][1] - rounded_markers[0][1]) ** 2))
+        if distance <= PROXIMITY_RADIUS: # Is M_O close enough to a marker?
+            location = rounded_markers[i] 
+        if location == []: # If not close enough to any markers, location is simply M_O's coords. 
+            location = rounded_markers[0] 
+    
+    # Check which marker is the target
+    for rounded_marker in rounded_markers:
+        if rounded_marker[2] == ID:
+            target = rounded_marker
 
-    ### Get steps from route ###
+    ## 3. If M_O is already at the target marker, skip rest of code
+    if location == target:
+        arrived = 1
+        return location, arrived, nodes, None, rounded_markers, None, None
+    else: 
+        arrived = 0
+
+    ## 4. If M_O not at target, route plan to target, output steps
+    # Need to establish safe movement areas (avoid walls)
+    nodes_safe, grid = find_safe_zones(nodes, grid, arena_size, walls)
+
+    # Route plan to target (end) in safe movement areas
+    M_O_node = [rounded_markers[0][0], rounded_markers[0][1]]
+    end_node = [target[0], target[1]] # Turn into a point, as a_star function reused for simple coords later
+    route = a_star(M_O_node, end_node, grid)
+    
+    if route == "Fail": # If unable to find route, find nearest safe corner
+        
+        safe_corners = get_corners(nodes_safe) # Find coord of safe corners
+        # closest_corner = get_closest_corner(safe_corners, rounded_markers) # Closest corner coord
+
+        route_found = 0
+
+        for corner in safe_corners:
+
+            if route_found == 0: # If no route found
+
+                route_to_corner = a_star(M_O_node, corner, grid)
+
+                if route_to_corner != "Fail": # If route to corner found
+
+                    route_to_target = a_star(corner, end_node, grid) # Calculate route to target
+
+                    if route_to_target != "Fail": # If route to target found
+
+                        route_found = 1 # Set check value to true, ending for loop
+                        arrived = 1 # Let Mission Control know it worked 
+                        route = route_to_corner + route_to_target
+                        
+        if route_found == 0:
+            warn("Unable to find route, so moving on") # If unable to get to corner, get next target
+            arrived = 1
+            return location, arrived, nodes, nodes_safe, rounded_markers, route, None                   
+
+    # Turn the route into steps 
     steps = get_steps(route)
 
-    print(f" This is the Route: {route}")
+    return location, arrived, nodes, nodes_safe, rounded_markers, route, steps
 
-    for node in nodes:
-        plt.plot(node[0], node[1], '.', color='yellow')
-
-    for node in nodes_safe:
-        plt.plot(node[0], node[1], '.', color='blue')
-
-    for marker in markers:
-        plt.plot(marker[0], marker[1], 'o', color='green')
-
-
-    plt.plot(M_O[0], M_O[1], 'x', color='black')
-
-    plt.plot(target[0], target[1], 'x', color='red')
-    
-    for step in route:
-        plt.plot(step[0], step[1], '*', color='magenta')
-
-    for step in steps:
-        plt.plot(step[0], step[1], 'o', color='red')
-
-    plt.show()
-
-################################################## Internal Functions ##################################################
-################################################## Establish grid ##################################################
+#####  Establish grid  #####  
 
 def establish_grid(arena_size):
-    """This function takes Vision's arena_size dimensions and turns this into a 
-    list of nodes (establishing the coordinates) and then the grid (this is a 
-    matrix of the nodes with a value of 0 or 1. 0 = Safe zone. 1 = Blockage.
-    At this point, a matrix of ones is created. The find_safe_zone function will 
-    assess where the safe grid points (nodes) are."""
 
-    ### Setup list of nodes (x,y) ###
+    # Create list of nodes
     x_nodes = list(range(0, arena_size[0] + 1, STEP)) # Linspace x by step size
-    y_nodes = list(range(0, arena_size[1] + 1, STEP)) # Linspace y by step size
-
-    ### Create list of nodes (x,y) ###
-    nodes = [] # Initialise list
+    y_nodes = list(range(0, arena_size[1] + 1, STEP)) # Linspace x by step size
+    nodes = []
     for x in x_nodes:
         for y in y_nodes:
-            nodes.append([x, y])
+            nodes.append([x,y])
 
-    ### Setup matrix of grid point values ###
+    # Create corresponding grid
     x_grid = len(x_nodes)
     y_grid = len(y_nodes)
-
-    ### Create matrix of grid point values ###
     grid = np.ones([x_grid, y_grid])
-    grid = grid.tolist() # Needs to be in list format for the A Star pathfinder
 
     return nodes, grid
 
-################################################## Round Markers to Nodes ##################################################
-def round_markers_to_node(markers):
-    """ """
-    new_markers = []
-    print(f"Original markers = {markers}")
-    
-    # for marker in markers:
-    #     new_marker = []
-    #     new_marker = marker[0]//STEP * STEP, marker[1]//STEP * STEP, marker[2]
-    #     new_markers.append(new_marker)
+#####  Round marker coords to a node  #####  
+def round_marker_to_node(marker):
 
-    for marker in markers:
-        new_marker = []
-        new_marker = STEP * round(marker[0] / STEP), STEP * round(marker[1] / STEP), marker[2]
-        new_markers.append(new_marker)
-    
-    print(f"New markers = {new_markers}")
+    # Round marker x and y to nearest node (based on STEP size)
+    rounded_marker = STEP * round(marker[0] / STEP), STEP * round(marker[1] / STEP), marker[2]
+    return rounded_marker
 
-    return new_markers
-    
-def round_robot_to_node(robot_coords):
-    """ """
-    print(f"Initial Robot Coords = {robot_coords}")
-    
-    #new_robot_coords = robot_coords[0]//STEP * STEP, robot_coords[1]//STEP * STEP
-    new_robot_coords = STEP * round(robot_coords[0] / STEP), STEP * round(robot_coords[1] / STEP)
+#####  Find safe nodes/grid points based on borders and walls  #####  
+def find_safe_zones(nodes, grid, arena_size, walls):
 
-    print(f"New Robot Coords = {new_robot_coords}")
+    # Find nodes which avoid arena borders
+    nodes_border_safe = []
+    for node in nodes:
+        if node[0] >= SAFETY_RADIUS and node[0] <= (x_length - SAFETY_RADIUS):
+            if node[1] >= SAFETY_RADIUS and node[1] <= (y_length - SAFETY_RADIUS):
+                nodes_border_safe.append(node)
 
-    return new_robot_coords
-
-################################################## Find Safe Zone ##################################################
-
-def find_safe_zone(arena_size, walls, grid):
-    """This function takes the established grid, and assigns a 0 value to all the safe travel zones.
-
-    Step One: Ignore all the nodes closest to the arena borders, thus leaving them as 1 (blocked)
-    Step Two: In remaining nodes, look if nodes far enough away from walls, assign 0 (safe)
-    Output list of safe nodes and updated grid values"""
-
-    ### Establish list of nodes away from arena borders ###
-    x_nodes_border_safe = list(range(0 + SAFETY_RADIUS, arena_size[0] + 1 - SAFETY_RADIUS, STEP)) # Apply safety distance to arena edge in x
-    y_nodes_border_safe = list(range(0 + SAFETY_RADIUS, arena_size[1] + 1 - SAFETY_RADIUS, STEP)) # Apply safety distance to arena edge in y
-
-    ### Create list of nodes away from arena borders (x,y) ###
-    nodes_border_safe = [] # Initialise list
-    for x in x_nodes_border_safe:
-        for y in y_nodes_border_safe:
-            nodes_border_safe.append([x, y])
-
-    ### Create list of nodes away from wall and assign corresponding grid values to 0 ###
-    nodes_safe = [] # Initialise list of safe nodes
-    
-    ## For each node in nodes safe list ##
+    # Find nodes which avoid walls 
+    nodes_safe = []
     for node in nodes_border_safe:
 
         true_vector = [] # Initialise list: Safe or too close to wall check (0 = too close, 1 = safe)
 
-        ## For each wall in walls list ##
+        # For each wall in walls list
         for wall in walls:
 
             ## Calculate direction vector of wall ##
@@ -311,86 +268,36 @@ def find_safe_zone(arena_size, walls, grid):
             else:
                 true_vector.append(1)     
 
-        if all(true_vector):
+        if all(true_vector): # If node satisfies all above safety conditions, add to list of safe nodes
             nodes_safe.append(node) 
             point = [node[0],node[1]]
             new_point = convert_from_nodes(point)
-            grid[new_point[0]][new_point[1]] = 0
+            grid[new_point[0]][new_point[1]] = 0 # Set grid point to 0 = safe
 
     return nodes_safe, grid
 
-################################################## A_Star ##################################################
-################################################## Create Grid Point Class ##################################################
-
-class grid_point:
-    """ """
-
-    ### Create class object ###
-    def __init__(self, parent=None, position=None):
-
-        ## Assign parent and position coordinate of grid_point ##
-        self.parent = parent
-        self.position = position
-
-        ## Initialise parameters ##
-        self.g = 0 # Distance between the current grid point and start node
-        self.h = 0 # Heuristic - estimated distance between current grid point and end grid point
-        self.f = 0 # Total cost of grid point - f = g + h
-
-    def __eq__(self, other):
-        return self.position == other.position
+#####  Convert a grid point to node coords  #####  
+def convert_from_grid(point):
     
-    def __repr__(self):
-        return f"{self.position} - g: {self.g} h: {self.h} f: {self.f}"
+    converted_point = (int(point[0] * STEP), int(point[1] * STEP))
+    return converted_point  
 
-    # defining less than for purposes of heap queue
-    def __lt__(self, other):
-        return self.f < other.f
-        
-    # defining greater than for purposes of heap queue
-    def __gt__(self, other):
-        return self.f > other.f
-        
-################################################## Find Route ##################################################
-        
-### Returns route between M_O and target ###
-def return_route(current_grid_point):
+#####  Convert a node coord to gridpoint position  #####  
+def convert_from_nodes(point):
 
-    ## Initialise route ##
-    route_grid = [] 
-    route_nodes = []
+    converted_point = (point[0] // STEP, point[1]// STEP)
+    return converted_point
 
-    ## Backtrack grid points passed on route (parent of current grid point) and add to route list ##
-    current = current_grid_point
-    while current is not None:
-        route_grid.append(current.position)
-        current = current.parent
-    #print(f"route_grid = {route_grid}")
+#####   Get route to node   #####  
+def a_star(M_O_node, end_node, grid):
 
-    for step in route_grid:
-        step = convert_from_grid(step)
-        route_nodes.append(step)
-    route_nodes.reverse()
-    #route_nodes[::-1]
+    M_O = convert_from_nodes(M_O_node)
+    end = convert_from_nodes(end_node)
 
-    #print(f"route_nodes = {route_nodes}")
-
-
-    return route_nodes
-
-def a_star(M_O, target, grid):
-    """ """
-
-    M_O = convert_from_nodes(M_O)
-    target = convert_from_nodes(target)
-
-    print(f"M_O = {M_O}")
-    print(f"target = {target}")
-    
     ### Create start grid point = M_O and End grid point = target ####
     start_grid_point = grid_point(None, M_O) # M_O has no parent
     start_grid_point.g = start_grid_point.h = start_grid_point.f = 0 # Initalise parameters
-    end_grid_point = grid_point(None, target) # target has no parent
+    end_grid_point = grid_point(None, end) # target has no parent
     end_grid_point.g = end_grid_point.h = end_grid_point.f = 0 # Initalise parameters
        
     ### Initialize Open List and Closed List ###
@@ -405,13 +312,13 @@ def a_star(M_O, target, grid):
 
     ### Adding a stop condition ###
     iterations = 0 # Initalise number of iterations completed
-    max_iterations = len(grid[0]) * len(grid) # If every node has been checked and no solution found, stop
-        #max_iterations = (len(grid[0]) * len(grid) // 2)
+    # max_iterations = len(grid[0]) * len(grid) # If every node has been checked and no solution found, stop
+    max_iterations = (len(grid[0]) * len(grid) // 2)
 
-    #allow_diagonal_movement
     ### Establish directions of travel ###
+    # Non-diagonal option:
     #directions = ((0, -1), (0, 1), (-1, 0), (1, 0)) # All possible 90deg. directions 
-    #if allow_diagonal_movement:
+    # Diagonal option:
     directions = ((0, -1), (0, 1), (-1, 0), (1, 0), (-1, -1), (-1, 1), (1, -1), (1, 1)) # All possible 45deg. directions 
 
     ### Search grid points until target (end grid point) found ###
@@ -422,8 +329,8 @@ def a_star(M_O, target, grid):
 
         if iterations > max_iterations:
             ## Return route found up to this point ## - CHANGE THIS LATER, IF FAILURE, SHOULD TRY TO MOVE SOMEWHERE ELSE
-            warn("Route not found, too many iterations")
-            route = return_route(current_grid_point)   
+            warn("Unable to find route at mid-point of code")
+            route = "Fail"
             return route
 
         ## Remove the current grid point from the Open List (to assess list) ##
@@ -479,51 +386,168 @@ def a_star(M_O, target, grid):
             ## Add the child to the open list ##
             heapq.heappush(open_list, child) # Heapush adds the child grid point and keeps the priority (ascending order)
 
-    warn("Route has not been found")
-    return None
+    warn("Unable to find route at end of code")
+    route = "Fail"
+    return route
 
-################################################## Get steps from Route ##################################################
+#####   Creat grid-point class to store parameter values   #####  
+class grid_point:
+    """ """
+
+    ### Create class object ###
+    def __init__(self, parent=None, position=None):
+
+        ## Assign parent and position coordinate of grid_point ##
+        self.parent = parent
+        self.position = position
+
+        ## Initialise parameters ##
+        self.g = 0 # Distance between the current grid point and start node
+        self.h = 0 # Heuristic - estimated distance between current grid point and end grid point
+        self.f = 0 # Total cost of grid point - f = g + h
+
+    def __eq__(self, other):
+        return self.position == other.position
+    
+    def __repr__(self):
+        return f"{self.position} - g: {self.g} h: {self.h} f: {self.f}"
+
+    # defining less than for purposes of heap queue
+    def __lt__(self, other):
+        return self.f < other.f
+        
+    # defining greater than for purposes of heap queue
+    def __gt__(self, other):
+        return self.f > other.f
+
+### Returns route between M_O and target ###
+def return_route(current_grid_point):
+
+    ## Initialise route ##
+    route_grid = [] 
+    route_nodes = []
+
+    ## Backtrack grid points passed on route (parent of current grid point) and add to route list ##
+    current = current_grid_point
+    while current is not None:
+        route_grid.append(current.position)
+        current = current.parent
+    #print(f"route_grid = {route_grid}")
+
+    for step in route_grid:
+        step = convert_from_grid(step)
+        route_nodes.append(step)
+    route_nodes.reverse()
+
+    return route_nodes
+
+#####  Find safe corners for M_O to move to ##### 
+def get_corners(nodes_safe):
+    
+    x_list = [] # Initialise list
+    y_list = [] # Initialise list
+    
+    for node in nodes_safe:
+        x_list.append(node[0])
+
+    x_min = min(x_list)
+
+    for node in nodes_safe: # Look at each node
+        if node[0] == x_min: # If on LHS
+            y_list.append(node[1]) # Get list of y values
+
+    y_min = min(y_list) # Find minimum LHS y value
+    y_max = max(y_list) # Find maximum LHS y value
+
+    bottom_left = [x_min, y_min]
+    top_left = [x_min, y_max]
+
+    y_list = [] # Initialise list
+
+    x_max = max(x_list) # Find maximum x value
+    for node in nodes_safe: # Look at each node
+        if node[0] == x_max: # If on RHS
+            y_list.append(node[1]) # Get list of y values
+
+    y_min = min(y_list) # Find minimum RHS y value
+    y_max = max(y_list) # Find maximum RHS y value
+    
+    bottom_right = [x_max, y_min]
+    top_right = [x_max, y_max]
+
+    safe_corners = bottom_left, top_left, bottom_right, top_right
+
+    return safe_corners
+
+#####  Find closest safe corner to travel to ##### 
+def get_closest_corner(safe_corners, rounded_markers):
+
+    index = list(range(0, len(safe_corners)))
+    corner_distances = []
+    distances = []
+
+    for i in index:
+        # Calculate distance between M_O and each safe corner
+        distance = math.sqrt(((safe_corners[i][0] - rounded_markers[0][0]) ** 2) + ((safe_corners[i][1] - rounded_markers[0][1]) ** 2))
+        corner_distances.append([safe_corners[i][0], safe_corners[i][1], distance]) # Store info of corner coord and distance
+        distances.append(distance)
+
+    for corner in corner_distances:
+        if min(distances) == corner[2]: # If smallest distance, is the specific corner's distance
+            closest_corner = [corner[0], corner[1]]  # Set this as the closest corner
+
+    return closest_corner
+
 def get_steps(route):
-    #for node in route[1:]:
+    
     steps = []
-    I = list(range(1, (len(route) - 1)))
+    index = list(range(1, (len(route) - 2)))
 
-    for i in I:
-        #print(f"This is current i = {i}")
+    for i in index:
+        # Calculate magnitude of x and y current jumps
         x_current_jump = route[i][0] - route[i-1][0] 
         y_current_jump = route[i][1] - route[i-1][1] 
 
+        # Calculate magnitude of x and y next jumps
         x_next_jump = route[i+1][0] - route[i][0]
         y_next_jump = route[i+1][1] - route[i][1]
 
-        if x_current_jump != x_next_jump or y_current_jump != y_next_jump:
+        # If direction changes between current and next jump, output a step
+        if x_current_jump != x_next_jump or y_current_jump != y_next_jump: 
             step = route[i][0], route[i][1]
-            #print(f"This is current step = {step}")
             steps.append(step)
 
     steps.append([route[-1][0], route[-1][1]])
 
-    print(f"These are the steps = {steps}")
     return steps
 
-
-
-################################################## Convert from grid to nodes ##################################################
-
-def convert_from_grid(point):
-    
-    converted_point = (int(point[0] * STEP), int(point[1] * STEP))
-    return converted_point
-
-################################################## Convert from nodes to grid ##################################################    
-
-def convert_from_nodes(point):
-
-    converted_point = (point[0] // STEP, point[1]// STEP)
-    return converted_point
-
-################################################## Testing ##################################################
-
+##### Testing...
 ID = 2
-M_O_go_here(ID)
+location, arrived, nodes, nodes_safe, rounded_markers, route, steps = M_O_go_here(ID)
+
+print(f"The target ID is {ID}")
+print(f"M_O is at ID {location[2]}, if 0, M_O is in limbo")
+print(f"Has M_O arrived? -> {arrived}, where 0 = No, 1 = Yes")
+
+## Test Plots/Prints
+for node in nodes:
+    plt.plot(node[0], node[1], 's', color='black')
+for node in nodes_safe:
+    plt.plot(node[0], node[1], 's', color='white')
+for rounded_marker in rounded_markers[1:]:
+    plt.plot(rounded_marker[0], rounded_marker[1], 'x', color='green')   
+plt.plot(rounded_markers[0][0], rounded_markers[0][1], 'o', color='black') 
+if route != "Fail":
+    for node in route:
+        plt.plot(node[0], node[1], '.', color='red')   
+if steps != None:
+    for step in steps:
+        plt.plot(step[0], step[1], '.', color='blue')   
+
+plt.show()
+
+#####  #####  #####  REMEMBER  #####  #####  #####
+
+# If markers = [] deal with it
+# Tell Fin, M_O must be the [0] markers index
 
