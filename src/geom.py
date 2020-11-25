@@ -122,5 +122,10 @@ def nearest_point_to(line, point):
     Returns the point on the given line that is nearest to the given point. The returned point may be beyond the end of the line.
     """
     hypot = [line[0], line[1], point[0], point[1]] # Imaginary line between line start and given point
-    f = (length(hypot) * math.cos(angle_between(line, hypot))) / length(line)
+    l = length(line)
+    if l == 0: # Prevent divide by zero errors, somehow these seem to happen occasionally
+        f = 0
+    else:
+        f = (length(hypot) * math.cos(angle_between(line, hypot))) / l
+
     return (line[0] + f * (line[2] - line[0]), line[1] + f * (line[3] - line[1]))
