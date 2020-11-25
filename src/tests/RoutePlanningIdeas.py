@@ -374,9 +374,9 @@ def return_route(current_grid_point):
     #route_nodes[::-1]
 
     #print(f"route_nodes = {route_nodes}")
-    safe_corners = []
 
-    return route_nodes, safe_corners
+
+    return route_nodes
 
 def a_star(M_O, target, grid):
     """ """
@@ -423,7 +423,7 @@ def a_star(M_O, target, grid):
         if iterations > max_iterations:
             ## Return route found up to this point ## - CHANGE THIS LATER, IF FAILURE, SHOULD TRY TO MOVE SOMEWHERE ELSE
             warn("Route not found, too many iterations")
-            route, safe_corners = return_route(current_grid_point)   
+            route = return_route(current_grid_point)   
             return route
 
         ## Remove the current grid point from the Open List (to assess list) ##
@@ -434,7 +434,7 @@ def a_star(M_O, target, grid):
 
         ## Check if target reached, if so return the route ##
         if current_grid_point == end_grid_point:
-            route, safe_corners = return_route(current_grid_point)   
+            route = return_route(current_grid_point)   
             return route
 
         ## Generate children (adjacent grid points to current based on direction options) ##
@@ -503,7 +503,7 @@ def get_steps(route):
 
     steps.append([route[-1][0], route[-1][1]])
 
-    print(f" These are the steps = {steps}")
+    print(f"These are the steps = {steps}")
     return steps
 
 
