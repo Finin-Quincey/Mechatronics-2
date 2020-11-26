@@ -8,17 +8,17 @@ import math
 import geom
 import line_tracker
 
-DEBUG = False
+DEBUG = True
 
 ### Constants ###
 
 # TODO: Measure the actual sizes of things!
 ARENA_SIZE = [2400, 1800]
-MARKER_WIDTH = 70
+MARKER_WIDTH = 77
 INITIAL_SCAN_FRAMES = 20 # Number of frames to scan for when route planning
 
-ROBOT_MARKER_ID = 10
-ORIGIN_MARKER_ID = 1 # Markers representing the origin of the arena
+ROBOT_MARKER_ID = 3
+ARENA_MARKER_IDS = [0, 1, 2, 4] # Markers representing corners of arena
 
 # These are in CLOCKWISE ORDER!
 ARENA_CORNER_COORDS = np.array([[0, 0], [0, ARENA_SIZE[1]], ARENA_SIZE, [ARENA_SIZE[0], 0]])
@@ -50,14 +50,12 @@ video_capture = cv2.VideoCapture(1)
 video_capture.set(3, 1280)
 video_capture.set(4, 720)
 
-VIDEO_SCALE = 0.8
-
 if DEBUG:
     cv2.namedWindow("frame-image", cv2.WINDOW_AUTOSIZE)
 
 ### Variables ###
 
-origin_tvec = np.empty((0, 0))
+transform_matrix = np.empty((1, 4))
 
 markers = [] # Will store the detected marker positions
 walls = [] # Will store the detected wall positions
@@ -95,8 +93,6 @@ def next_frame():
     # Unlike the aruco marker detection, HLT doesn't do this automatically so we need to do it first
     out = cv2.undistort(out, CAMERA_MATRIX, DIST_COEFFS)
 
-    out = cv2.resize(out, (int(VIDEO_SCALE * 1280), int(VIDEO_SCALE * 720)))
-
     #walls = line_tracker.update(out) # Update the line tracker
 
     return out
@@ -124,21 +120,27 @@ def scan_for_markers(frame):
     rvecs = rvecs[idx]
     ids = ids[idx]
 
-    corner_indices = np.nonzero(ids == ORIGIN_MARKER_ID)[0]
-    other_indices = np.nonzero(ids != ORIGIN_MARKER_ID)[0]
+    corner_indices = np.where(np.in1d(ids, ARENA_MARKER_IDS))[0]
+    # The tilde inverts it (because having 3 different ways of expressing NOT makes total sense...)
+    other_indices = np.where(~np.in1d(ids, ARENA_MARKER_IDS))[0]
 
-    # Global is required to access these from inside a function
-    global markers
-    global origin_tvec
+    arena_tvecs = np.empty((0, 0))
 
     # Split tvecs into corners and actual object markers
-    if corner_indices.size > 0: origin_tvec = tvecs[corner_indices[0]] # Get tvecs of arena corner markers
+    if corner_indices.size > 0: arena_tvecs = tvecs[corner_indices] # Get tvecs of arena corner markers
     if other_indices.size > 0: tvecs = tvecs[other_indices]
 
+    # Global is required to access these from inside a function
+    global transform_matrix
+    global markers
+
+    if arena_tvecs.shape[0] == 4: # If four corners were detected
+        # Update transform matrix that maps image pts to arena coords
+        transform_matrix = cv2.getPerspectiveTransform(np.float32(arena_tvecs[:, 0, 0, 0:2]), np.float32(ARENA_CORNER_COORDS))
+    
     # Transform the rest of the points
-    if origin_tvec.size != 0 and tvecs.size != 0:
-        markers = tvecs[:, :, 0, 0:2] - origin_tvec[:, :, 0:2]
-        markers[:, 0, 1] = -markers[:, 0, 1] # Flip y axis
+    if transform_matrix.size == 9 and tvecs.size != 0:
+        markers = cv2.perspectiveTransform(tvecs[:, :, 0, 0:2], transform_matrix)
 
 def scan_for_robot(frame):
     """
@@ -157,16 +159,17 @@ def scan_for_robot(frame):
     # gray[gray > 50] = 255 # Threshold
     gray = np.uint8(gray)
 
-    # Morphological opening to patch up the black regions
-    gray = cv2.erode(gray, KERNEL_3)
+    # Morphological closing to reconstruct the white regions
     gray = cv2.dilate(gray, KERNEL_3)
+    gray = cv2.erode(gray, KERNEL_3)
 
     gray = cv2.convertScaleAbs(gray, alpha = 3, beta = -60)
 
-    gray = cv2.erode(gray, KERNEL_3)
-    # gray = cv2.dilate(gray, KERNEL_5)
+    # Morphological opening with a bigger mask to patch up the black regions
+    gray = cv2.erode(gray, KERNEL_5)
+    gray = cv2.dilate(gray, KERNEL_5)
 
-    gray[gray < 170] = 0 # Threshold
+    gray[gray < 180] = 0 # Threshold
 
     corners, ids, rP = aruco.detectMarkers(gray, ARUCO_DICT)
 
@@ -180,31 +183,21 @@ def scan_for_robot(frame):
         rvecs, tvecs, _objPoints = aruco.estimatePoseSingleMarkers(corners, MARKER_WIDTH, CAMERA_MATRIX, DIST_COEFFS)
         
         # Transform the rest of the points
-        if origin_tvec.size != 0 and tvecs.size != 0:
+        if transform_matrix.size == 9 and tvecs.size != 0:
 
-            robot_pos = tvecs[idx, :, 0:2] - origin_tvec[:, :, 0:2]
-            robot_pos[:, :, 1] = -robot_pos[:, :, 1] # Flip y axis
+            robot_pos = cv2.perspectiveTransform(tvecs[idx, :, 0:2], transform_matrix)[0]
 
             rmat, jacobian = cv2.Rodrigues(rvecs[idx])
 
             # Extract yaw angle from rotation matrix
             # When the acos and asin expressions have different signs, the angle is negative
-            robot_angle = math.degrees(math.acos(rmat[0][0]))
-            if math.acos(rmat[0][0]) * math.asin(rmat[1][0]) < 0:
-                robot_angle = -robot_angle
+            robot_angle = math.degrees(math.copysign(math.acos(rmat[0][0]), math.acos(rmat[0][0]) * math.asin(rmat[1][0])))
             # robot_angle = math.degrees(math.asin(rmat[1][0]))
-
-def relativise(coords):
-    """
-    Converts the given coordinate vector to be relative to the origin
-    """
-
 
 ### DEBUGGING ###
 if DEBUG:
     while(True):
         frame = next_frame()
-        #print(robot_pos)
         print(robot_angle)
         cv2.imshow('frame-image', frame)
         # If the button q is pressed in one of the windows

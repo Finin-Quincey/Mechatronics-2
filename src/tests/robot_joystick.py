@@ -8,7 +8,7 @@ import sys
 
 ### Constants ###
 
-REFRESH_PERIOD = 20
+REFRESH_PERIOD = 80
 DRIVE_SPEED = 60
 TURN_SPEED = 25
 
@@ -24,8 +24,8 @@ KEY_Q = ord('q')
 # N.B. when on legacy at uni, run simulink to get the IP of the arduino
 #ROBOT_UDP_IP = "138.38.228.186"
 #ROBOT_UDP_IP = "138.38.228.190"
-ROBOT_UDP_IP = "138.38.229.150" # Wall-e at uni
-#ROBOT_UDP_IP = "192.168.0.169"  # Wall-e at uni
+#ROBOT_UDP_IP = "138.38.229.150" # Wall-e at uni
+ROBOT_UDP_IP = "192.168.0.169"  # Wall-e at home
 
 # This is the REMOTE port the machine will reply on (on that machine this is the value for the LOCAL port)
 ROBOT_UDP_PORT = 50001

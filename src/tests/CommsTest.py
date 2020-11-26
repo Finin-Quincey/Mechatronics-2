@@ -4,8 +4,6 @@ import sys
 import cv2
 
 import comms
-import vision
-from vision import vision
 
 ### Constants ###
 REFRESH_PERIOD = 80
@@ -24,16 +22,16 @@ logging.basicConfig(level = logging.INFO)
 
 prevkey = 0
 
-response = comms.send_destination_and_wait([0, 0], 0, [1200, 1600])
+response = comms.send_destination_and_wait([0, 0], 0, [0, 1000])
 
 if response:
      print("Robot replied with a 1")
 else:
      print("Something went wrong!")
 
-time.sleep(12)
+time.sleep(4)
 
-comms.send_update(5)
+comms.send_update(10)
 
 ### Main loop ###
 

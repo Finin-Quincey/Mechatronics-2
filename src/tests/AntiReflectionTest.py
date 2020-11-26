@@ -3,7 +3,7 @@
 
 ### Manual Inputs ###
 # ArUco code width
-width = 77
+width = 70
 
 ### Import required libraries ###
 # This is the vision library OpenCV
@@ -87,17 +87,17 @@ while(True):
     # gray[gray > 50] = 255 # Threshold
     gray = np.uint8(gray)
 
-    # Morphological closing to reconstruct the white regions
-    gray = cv2.dilate(gray, k3)
+    # Morphological opening to patch up the black regions
     gray = cv2.erode(gray, k3)
+    gray = cv2.dilate(gray, k3)
 
     gray = cv2.convertScaleAbs(gray, alpha = 3, beta = -60)
 
-    # Morphological opening with a bigger mask to patch up the black regions
-    gray = cv2.erode(gray, k5)
-    gray = cv2.dilate(gray, k5)
+    # Morphological closing to reconstruct the white regions
+    # gray = cv2.dilate(gray, k3)
+    gray = cv2.erode(gray, k3)
 
-    gray[gray < 180] = 0 # Threshold
+    gray[gray < 160] = 0 # Threshold
 
     # Convert the image from the camera to Gray scale
     #gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)

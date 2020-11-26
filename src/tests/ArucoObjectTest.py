@@ -13,7 +13,7 @@ import cv2.aruco as aruco
 
 ### Manual Inputs ###
 # ArUco code width
-MARKER_WIDTH = 76
+MARKER_WIDTH = 70
 
 ### Setup camera ###
 # Read and store the calibration information from Sample_Calibration

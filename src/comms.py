@@ -24,8 +24,8 @@ PC_UDP_IP = socket.gethostbyname(socket.gethostname())
 # This is the LOCAL port I am expecting data (on the sending machine this is the REMOTE port)
 PC_UDP_PORT = 50002
 
-# Time in milliseconds after which the 'wait for response' functions will time out
-TIMEOUT_LIMIT = 10000
+# Time in seconds after which the 'wait for response' functions will time out
+TIMEOUT_LIMIT = 3
 
 # Maximum x and y coordinates in mm, should be at least the size of the arena
 SPATIAL_RANGE = 2550
@@ -48,6 +48,7 @@ recieve_socket = socket.socket(socket.AF_INET,     # Family of addresses, in thi
                                socket.SOCK_DGRAM)  # What protocol to use
 
 recieve_socket.bind((PC_UDP_IP, PC_UDP_PORT))
+recieve_socket.settimeout(TIMEOUT_LIMIT)
 
 logging.info('Sockets successfully created')
 
@@ -133,7 +134,8 @@ def send_update(angle_correction):
     # All angles should be within -180 to 180
     if angle < 0 or angle > 255: raise ValueError("Bearing angle out of bounds!")
 
-    send_socket.sendto(bytes(angle), (ROBOT_UDP_IP, MessageType.UPDATE.value))
+    # Even when there's only one value, it MUST BE IN SQUARE BRACKETS!
+    send_socket.sendto(bytes([angle]), (ROBOT_UDP_IP, MessageType.UPDATE.value))
 
 def wait_for_response():
     """
