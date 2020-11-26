@@ -4,6 +4,7 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
+
         {
             "name": "RelativeCoordsTest",               // The name to show in the run tab dropdown menu
             "type": "python",                           // No touchy
@@ -44,6 +45,27 @@
             "type": "python",
             "request": "launch",
             "module": "tests.LineTrackerTest",
+            "cwd": "${workspaceFolder}/src"
+        },
+        {
+            "name": "CommsTest",
+            "type": "python",
+            "request": "launch",
+            "module": "tests.CommsTest",
+            "cwd": "${workspaceFolder}/src"
+        },
+        {
+            "name": "AntiReflectionTest",
+            "type": "python",
+            "request": "launch",
+            "module": "tests.AntiReflectionTest",
+            "cwd": "${workspaceFolder}/src"
+        },
+        {
+            "name": "vision",
+            "type": "python",
+            "request": "launch",
+            "module": "vision",
             "cwd": "${workspaceFolder}/src"
         }
     ]
