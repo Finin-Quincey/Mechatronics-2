@@ -123,7 +123,7 @@ def scan_for_markers(frame):
     # The tilde inverts it (because having 3 different ways of expressing NOT makes total sense...)
     other_indices = np.where(~np.in1d(ids, ARENA_MARKER_IDS))[0]
 
-    arena_tvecs = []
+    arena_tvecs = np.empty((0, 0))
 
     # Split tvecs into corners and actual object markers
     if corner_indices.size > 0: arena_tvecs = tvecs[corner_indices] # Get tvecs of arena corner markers
@@ -177,16 +177,21 @@ def scan_for_robot(frame):
 
     if ids is not None and ROBOT_MARKER_ID in ids:
 
-        idx = np.where(ids == ROBOT_MARKER_ID)[0]
-        
+        idx = np.nonzero(ids == ROBOT_MARKER_ID)[0]
+
         rvecs, tvecs, _objPoints = aruco.estimatePoseSingleMarkers(corners, MARKER_WIDTH, CAMERA_MATRIX, DIST_COEFFS)
+        
+        # Transform the rest of the points
+        if transform_matrix.size == 9 and tvecs.size != 0:
 
-        robot_pos = cv2.perspectiveTransform(tvecs[idx, :, 0:2], transform_matrix)[0]
+            robot_pos = cv2.perspectiveTransform(tvecs[idx, :, 0:2], transform_matrix)[0]
 
-        rmat, jacobian = cv2.Rodrigues(rvecs[idx])
-        # This is definitely cheating with the angle conversion but I don't care, it's good enough
-        robot_angle = math.degrees(math.copysign(math.acos(rmat[0][0]), rmat[2][0]))
-        # robot_angle = math.degrees(math.asin(rmat[1][0]))
+            rmat, jacobian = cv2.Rodrigues(rvecs[idx])
+
+            # Extract yaw angle from rotation matrix
+            # When the acos and asin expressions have different signs, the angle is negative
+            robot_angle = math.degrees(math.copysign(math.acos(rmat[0][0]), math.acos(rmat[0][0]) * math.asin(rmat[1][0])))
+            # robot_angle = math.degrees(math.asin(rmat[1][0]))
 
 ### DEBUGGING ###
 if DEBUG:

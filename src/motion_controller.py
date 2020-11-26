@@ -37,6 +37,6 @@ def go_to(dest):
 
         if geom.length(robot_dest_line) < DESTINATION_REACHED_DIST: break # Stop looping if robot is near enough to dest
 
-        error_angle = vision.robot_angle - geom.angle(robot_dest_line)
+        error_angle = vision.robot_angle - math.degrees(geom.angle(robot_dest_line))
 
         comms.send_update(error_angle)
