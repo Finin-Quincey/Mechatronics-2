@@ -31,8 +31,8 @@ dist_coef=Camera['dist_coef']# distortion coefficients from the camera
 cap = cv2.VideoCapture(1)
 
 # Set the width and heigth of the camera to 640x480
-cap.set(3,640)
-cap.set(4,480)
+cap.set(3,1280)
+cap.set(4,720)
 
 ### Setup viewing windows ###
 #Create two opencv named windows
