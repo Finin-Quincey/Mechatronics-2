@@ -20,8 +20,8 @@ import geom
 INTERP_FRAMES = 15 # The number of frames over which lines will be merged
 
 ANGLE_THRESHOLD = math.radians(5) # Lines within this angle of each other are considered parallel
-PROXIMITY_THRESHOLD = 10 # Parallel lines within this distance of each other are considered conincident
-WIDTH_THRESHOLD = 40 # Parallel, non-coincident lines within this distance of each other are considered two sides of a wall
+PROXIMITY_THRESHOLD = 8 # Parallel lines within this distance of each other are considered conincident
+WIDTH_THRESHOLD = 20 # Parallel, non-coincident lines within this distance of each other are considered two sides of a wall
 
 ### Variables ###
 
@@ -34,6 +34,9 @@ def update(frame):
     """
     Updates the line tracker with the next frame from the camera and returns the merged lines from the last n frames
     """
+    # Optional thresholding step (was needed for the kitchen floor since it's tiled!)
+    frame[frame > 50] = 255
+
     # Edge detection
     frame = cv2.Canny(frame, 50, 150, apertureSize = 3)
 
