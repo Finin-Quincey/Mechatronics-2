@@ -10,10 +10,9 @@ from enum import Enum # Enumeration types
 
 # This is the IP address of the machine that the data will be send to
 # N.B. when on legacy at uni, run simulink to get the IP of the arduino
-#ROBOT_UDP_IP = "138.38.228.186"
-#ROBOT_UDP_IP = "138.38.228.190"
-ROBOT_UDP_IP = "138.38.229.150"
-#ROBOT_UDP_IP = "192.168.0.169"
+#ROBOT_UDP_IP = "138.38.229.150" # Uni
+#ROBOT_UDP_IP = "192.168.0.169" # Home
+ROBOT_UDP_IP = "192.168.137.169" # Rovertime hotspot
 
 # This is the REMOTE port the machine will reply on (on that machine this is the value for the LOCAL port)
 ROBOT_UDP_PORT = 50001
@@ -107,6 +106,8 @@ def send_destination(pos, bearing, dest):
 
     # Send the data to the arduino
     send_socket.sendto(bytes([x, y, angle, dx, dy]), (ROBOT_UDP_IP, MessageType.DESTINATION.value))
+    print("Sent destination message:")
+    print([x, y, angle, dx, dy])
 
 def send_stop_and_wait():
     """
@@ -136,6 +137,8 @@ def send_update(angle_correction):
 
     # Even when there's only one value, it MUST BE IN SQUARE BRACKETS!
     send_socket.sendto(bytes([angle]), (ROBOT_UDP_IP, MessageType.UPDATE.value))
+    print("Sent update message:")
+    print([angle])
 
 def wait_for_response():
     """

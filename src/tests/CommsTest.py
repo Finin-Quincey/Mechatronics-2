@@ -22,16 +22,18 @@ logging.basicConfig(level = logging.INFO)
 
 prevkey = 0
 
-response = comms.send_destination_and_wait([0, 0], 0, [0, 1000])
+# response = comms.send_destination_and_wait([0, 0], 0, [2000, 1000])
 
-if response:
-     print("Robot replied with a 1")
-else:
-     print("Something went wrong!")
+# if response:
+#      print("Robot replied with a 1")
+# else:
+#      print("Something went wrong!")
 
-time.sleep(4)
+# time.sleep(4)
 
-comms.send_update(10)
+for i in range(18):
+     comms.send_update(20)
+     time.sleep(1.5)
 
 ### Main loop ###
 
