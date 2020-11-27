@@ -74,6 +74,13 @@
             "request": "launch",
             "module": "motion_controller",
             "cwd": "${workspaceFolder}/src"
+        },
+        {
+            "name": "route_planner_real",
+            "type": "python",
+            "request": "launch",
+            "module": "route_planner_real",
+            "cwd": "${workspaceFolder}/src"
         }
     ]
 }

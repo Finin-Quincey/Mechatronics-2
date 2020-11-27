@@ -1,9 +1,12 @@
 #####  #####  Import required libraries  ##### #####
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 import numpy as np
 import math
 import heapq
 from warnings import warn
+
+import vision
+import motion_controller
 
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! # 
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! # 
@@ -180,6 +183,7 @@ def M_O_go_here(ID):
             # If M_O already at target ID, target_reached = 1 - Change this for wall_E
             if location == ID:
                 target_reached = 1
+                break
 
             # Work out safe travel nodes - Same for wall_E
             nodes_safe, grid = find_safe_zones(nodes, grid, arena_size, walls, rounded_markers)
@@ -189,24 +193,28 @@ def M_O_go_here(ID):
             
             if route == []: 
                 target_reached = 1 # If no route was found, skip this destination (exit the M_O_go_here function)
+                break
 
             # Turn the route into steps 
             steps = get_steps(route)
             
             # Move to each step
             for step in steps:
-                _, _, _, wall_E_here, wall_E_moving = get_coords()
+                _, _, _, wall_E_here, wall_E_moving = vision.get_coords()
+                if wall_E_here == 1: break
                 # Move to this step
-                pass
+                motion_controller.go_to(step)
+
+        flag = True
 
         # If wallE here
-        while wall_E_here == 1:
+        while wall_E_here == 1 and flag:
             
             # And if wallE is stopped
             while wall_E_moving == 0:
                 
                 # Get outputs from Vision - Same for wall_E
-                arena_size, markers, walls, wall_E_here, wall_E_moving = get_coords()
+                arena_size, markers, walls, wall_E_here, wall_E_moving = vision.get_coords()
 
                 # Establish nodes/grid - Same for wall_E
                 nodes, grid = establish_grid(arena_size)
@@ -232,30 +240,32 @@ def M_O_go_here(ID):
                 ##### NOT SURE WHAT TO DO HERE IF CANNOT GET TO WALLE
                 if route == []: 
                     target_reached = 1 # If no route was found, skip this destination (exit the M_O_go_here function)
+                    flag = False
+                    break
 
                 # Turn the route into steps - Same for wall_E
                 steps = get_steps(route)
 
                 # Move to each step - Same for wall_E
                 for step in steps:
-                    _, _, _, wall_E_here, wall_E_moving = get_coords()
+                    _, _, _, wall_E_here, wall_E_moving = vision.get_coords()
                     # Move to this step
-                    pass
+                    motion_controller.go_to(step)
 
                 # Move M_O to hit Wall_E
 
-                for node in nodes:
-                    plt.plot(node[0], node[1], 's', color='black')
-                for node in nodes_safe:
-                    plt.plot(node[0], node[1], 's', color='white')
-                for rounded_marker in rounded_markers[1:]:
-                    plt.plot(rounded_marker[0], rounded_marker[1], 'x', color='green')   
-                plt.plot(rounded_markers[0][0], rounded_markers[0][1], 'o', color='magenta') 
-                for node in route:
-                    plt.plot(node[0], node[1], '.', color='red')   
-                for step in steps:
-                    plt.plot(step[0], step[1], '.', color='blue')  
-                plt.show()
+                # for node in nodes:
+                #     plt.plot(node[0], node[1], 's', color='black')
+                # for node in nodes_safe:
+                #     plt.plot(node[0], node[1], 's', color='white')
+                # for rounded_marker in rounded_markers[1:]:
+                #     plt.plot(rounded_marker[0], rounded_marker[1], 'x', color='green')   
+                # plt.plot(rounded_markers[0][0], rounded_markers[0][1], 'o', color='magenta') 
+                # for node in route:
+                #     plt.plot(node[0], node[1], '.', color='red')   
+                # for step in steps:
+                #     plt.plot(step[0], step[1], '.', color='blue')  
+                # plt.show()
 
 #####  #####  Mini Functions  #####  #####
 ##### Turn arena into list of nodes and matrix of gridpoints #####
