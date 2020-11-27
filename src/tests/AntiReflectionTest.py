@@ -76,34 +76,33 @@ while(True):
     ret, frame = cap.read()
 
     # Increase contrast
-    frame = cv2.convertScaleAbs(frame, alpha = 1.8, beta = -220)
+    #scaled = cv2.convertScaleAbs(frame, alpha = 1.8, beta = -220)
 
     # Mono mixer
-    r_mult = -0.7
-    g_mult =  1.7
-    b_mult = -0.7
+    r_mult = -0.8
+    g_mult =  0.9
+    b_mult = -0.1
     gray = frame[:, :, 2] * r_mult + frame[:, :, 1] * g_mult + frame[:, :, 0] * b_mult
     gray[gray < 0] = 0 # Remove negative values
-    # gray[gray > 50] = 255 # Threshold
-    gray = np.uint8(gray)
+
+    # Increase contrast
+    gray = cv2.convertScaleAbs(gray)
+
+    # Adaptive threshold to separate out the marker shape
+    # N.B. I am aware that the aruco detector also does this but we need to do it now for the morphological operations
+    gray = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, -2)
 
     # Morphological opening to patch up the black regions
-    gray = cv2.erode(gray, k3)
     gray = cv2.dilate(gray, k3)
-
-    gray = cv2.convertScaleAbs(gray, alpha = 3, beta = -60)
-
-    # Morphological closing to reconstruct the white regions
-    # gray = cv2.dilate(gray, k3)
     gray = cv2.erode(gray, k3)
-
-    gray[gray < 160] = 0 # Threshold
-
-    # Convert the image from the camera to Gray scale
-    #gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-
-    # Histogram equalisation
-    #gray = clahe.apply(gray)
+    
+    # Finally dilate again to give it more white to find
+    gray = cv2.dilate(gray, k3)
+    
+    # Clamp to uint8
+    # gray[gray > 255] = 255
+    # gray[gray < 0] = 0
+    gray = np.uint8(gray)
 
     ### Detect ArUco Markers ###
     # After the convertion to gray (line 35 of the original) run the detection function
