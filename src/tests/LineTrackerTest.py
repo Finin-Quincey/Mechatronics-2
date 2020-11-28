@@ -38,6 +38,7 @@ cv2.moveWindow("frame-image", 100, 100)
 cv2.moveWindow("frame-edges", 800, 100)
 
 n = 0
+t = 20 # Threshold for tuning
 
 ### Run Camera ###
 # Execute this continuously
@@ -51,6 +52,12 @@ while(True):
 
     # Unlike the aruco marker detection, HLT doesn't do this automatically so we need to do it first
     frame = cv2.undistort(frame, CAMERA_MATRIX, DIST_COEFFS)
+
+    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
+    frame[frame > t] = 255 # Tune threshold
+    
+    #frame = cv2.adaptiveThreshold(frame, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, t)
 
     # Edge detection
     edges = cv2.Canny(frame, 50, 200, apertureSize = 3)
@@ -96,11 +103,14 @@ while(True):
     #end = time.perf_counter()
 
     # If the button q is pressed in one of the windows
-    if cv2.waitKey(20) & 0xFF == ord('q'):
+    key = cv2.waitKey(20) & 0xFF
+    if key == ord('q'):
         # Exit the While loop
         break
+    elif key == ord('w'):
+        t += 1
 
-    n += 1
+    # n += 1
 
 # When everything done, release the capture
 video_capture.release()
