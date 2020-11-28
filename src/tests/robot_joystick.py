@@ -44,11 +44,21 @@ logging.info('Socket successfully created')
 # Create a blank window so we can monitor keypresses (yeah this is a dumb way of doing it but meh)
 cv2.namedWindow("robot-controller", cv2.WINDOW_AUTOSIZE)
 
+# Initialise the camera
+video_capture = cv2.VideoCapture(1)
+
+# Set the width and height of the camera to the maximum resolution it can do
+video_capture.set(3, 1280)
+video_capture.set(4, 720)
+
 prevkey = 0
 
 ### Main loop ###
 
 while(True): # Forever
+
+    ret, frame = video_capture.read()
+    cv2.imshow('robot-controller', frame)
 
     key = cv2.waitKey(REFRESH_PERIOD) & 0xFF
 

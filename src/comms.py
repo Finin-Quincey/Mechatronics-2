@@ -6,6 +6,8 @@ import logging  # This library will offer us a different method to print informa
 
 from enum import Enum # Enumeration types
 
+DEBUG = False
+
 ### Constants ###
 
 # This is the IP address of the machine that the data will be send to
@@ -53,11 +55,11 @@ logging.info('Sockets successfully created')
 
 ### Message Types ###
 
-class MessageType(Enum):
+class MessagePort(Enum):
 
     DESTINATION = 50001
     UPDATE = 50002
-    STOP = 50003
+    MANUAL = 50003
 
 ### Functions ###
 
@@ -105,26 +107,11 @@ def send_destination(pos, bearing, dest):
     if dy < 0 or dy > 255: raise ValueError(f"Destination y coordinate {dest[1]} out of bounds!")
 
     # Send the data to the arduino
-    send_socket.sendto(bytes([x, y, angle, dx, dy]), (ROBOT_UDP_IP, MessageType.DESTINATION.value))
-    print("Sent destination message:")
-    print([x, y, angle, dx, dy])
+    send_socket.sendto(bytes([x, y, angle, dx, dy]), (ROBOT_UDP_IP, MessagePort.DESTINATION.value))
 
-def send_stop_and_wait():
-    """
-    Sends a stop command to the robot and waits for a response
-    """
-    # Send message to robot
-    send_stop()
-    # Wait for response
-    return wait_for_response()
-
-def send_stop():
-    """
-    Sends a stop command to the robot
-    Returns: True if the robot sent a 1 (confirm) in response, false if the robot sent an error (0) or if the connection timed out
-    """
-    # No additional data for this one
-    send_socket.sendto(bytes([0]), (ROBOT_UDP_IP, MessageType.STOP.value))
+    if DEBUG:
+        print("Sent destination message:")
+        print([x, y, angle, dx, dy])
 
 def send_update(angle_correction):
     """
@@ -136,9 +123,11 @@ def send_update(angle_correction):
     if angle < 0 or angle > 255: raise ValueError(f"Bearing angle {angle_correction} out of bounds!")
 
     # Even when there's only one value, it MUST BE IN SQUARE BRACKETS!
-    send_socket.sendto(bytes([angle]), (ROBOT_UDP_IP, MessageType.UPDATE.value))
-    print("Sent update message:")
-    print([angle])
+    send_socket.sendto(bytes([angle]), (ROBOT_UDP_IP, MessagePort.UPDATE.value))
+
+    if DEBUG:
+        print("Sent update message:")
+        print([angle])
 
 def wait_for_response():
     """
@@ -154,3 +143,15 @@ def wait_for_response():
     if not addr == (ROBOT_UDP_IP, ROBOT_UDP_PORT): raise IOError("Received data from an unknown address!")
 
     return data[0] == 1 # Return true if we received a 1, false if we received a 0
+
+def send_forward():
+    """
+    Sends a forward command to the robot
+    """
+    send_socket.sendto(bytes([1, 30]), (ROBOT_UDP_IP, MessagePort.MANUAL.value))
+
+def send_stop():
+    """
+    Sends a stop command to the robot
+    """
+    send_socket.sendto(bytes([0, 0]), (ROBOT_UDP_IP, MessagePort.MANUAL.value))
