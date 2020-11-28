@@ -8,21 +8,33 @@ import math
 import numpy as np
 import cv2
 
-MAX_CONNECTION_ATTEMPTS = 5
+### Constants ###
 
-UPDATE_PERIOD = 0.02
-FEEDBACK_INTERVAL = 2
+MAX_CONNECTION_ATTEMPTS = 5     # Maximum number of tries to get a response from the arduino
+MAX_DETECTION_ATTEMPTS = 200    # Maximum number of tries to find the robot in frame
 
-DESTINATION_REACHED_DIST = 100
+UPDATE_PERIOD = 0.02            # Time between aruco rescans
+FEEDBACK_START_DELAY = 1.5      # Delay between sending destination message and first update message
+FEEDBACK_INTERVAL = 1.5         # Delay between consecutive update messages
 
-DEBUG = True
+CORRECTION_ANGLE_LIMIT = 30     # Maximum magnitude of the error angle (in degrees) sent in update messages
 
-if DEBUG:
+DESTINATION_REACHED_DIST = 100  # Radius around destination point within which robot is considered to have reached it
+
+DEBUG = __name__ == '__main__' # True if we ran this file directly, false if it was imported as a module
+
+SHOW_WINDOW = True
+
+if SHOW_WINDOW:
     cv2.namedWindow("frame-image", cv2.WINDOW_AUTOSIZE)
-    cv2.namedWindow("bw-image", cv2.WINDOW_AUTOSIZE)
 
-
-# TODO: Function that just drives forward a bit
+def nudge_forward():
+    """
+    Makes the robot drive forward a short distance
+    """
+    comms.send_forward()
+    time.sleep(1)
+    comms.send_stop()
 
 def go_to(dest):
     """
@@ -31,31 +43,32 @@ def go_to(dest):
 
     attempts = 0
 
-    while len(vision.robot_pos) == 0 and attempts < 200:
-        out, bw_out = vision.next_frame()
-        if DEBUG:
+    while len(vision.robot_pos) == 0 and attempts < MAX_DETECTION_ATTEMPTS:
+        out = vision.next_frame(False)
+        if SHOW_WINDOW:
             # print(vision.robot_pos)
             cv2.imshow('frame-image', out)
-            cv2.imshow('bw-image', bw_out)
             cv2.waitKey(20)
         attempts += 1
         
     if len(vision.robot_pos) == 0:
-        raise IOError("Could not locate robot after 200 attempts")
+        raise IOError(f"Could not locate robot after {MAX_DETECTION_ATTEMPTS} attempts")
 
     response = False
     attempts = 0
 
-    while not response and attempts < MAX_CONNECTION_ATTEMPTS:
+    while attempts < MAX_CONNECTION_ATTEMPTS:
         # Remember this takes an angle from 0 (NORTH) to 360
         response = comms.send_destination_and_wait(vision.robot_pos, vision.robot_angle % 360, dest)
+        print(f"Sent destination message to robot: \nCurrent: {vision.robot_pos}\nBearing: {vision.robot_angle % 360}\nDestination: {dest}")
+        if response: break # Move on if we got a response
         print("Failed attempt to connect")
         attempts += 1
 
     if not response:
-        raise IOError("Failed to connect after 5 attempts")
+        raise IOError(f"Failed to connect after {MAX_CONNECTION_ATTEMPTS} attempts")
 
-    time.sleep(2)
+    time.sleep(FEEDBACK_START_DELAY)
 
     start = -1
 
@@ -63,8 +76,8 @@ def go_to(dest):
 
         time.sleep(UPDATE_PERIOD)
 
-        out, bw_out = vision.next_frame()
-        if DEBUG:
+        out = vision.next_frame(False)
+        if SHOW_WINDOW:
             cv2.imshow('frame-image', out)
             cv2.waitKey(20)
 
@@ -85,23 +98,20 @@ def go_to(dest):
             error_angle = error_angle + 180
 
         # Limit error correction to +/- 15 degrees
-        if abs(error_angle) > 15: error_angle *= 15/abs(error_angle)
+        if abs(error_angle) > CORRECTION_ANGLE_LIMIT: error_angle *= CORRECTION_ANGLE_LIMIT/abs(error_angle)
 
         # No point correcting by less than a degree
         if abs(error_angle) > 1 and time.perf_counter() - start > FEEDBACK_INTERVAL:
             comms.send_update(error_angle)
             start = time.perf_counter()
             #print("Update sent")
-            print(error_angle)
+            #print(error_angle)
 
 # DEBUG
 if DEBUG:
+    route = [[1200, 800], [600, 400], [500, 900], [2000, 1200]] 
     while True:
-        go_to([1200, 800])
-        print("Reached destination")
-        go_to([400, 400])
-        print("Reached destination")
-        go_to([500, 900])
-        print("Reached destination")
-        go_to([2000, 1200])
-        print("Reached destination")
+        for dest in route:
+            go_to(dest)
+            print("Reached destination")
+            time.sleep(7)

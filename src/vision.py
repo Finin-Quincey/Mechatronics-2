@@ -8,12 +8,11 @@ import math
 import geom
 import line_tracker
 
-DEBUG = False
+DEBUG = __name__ == '__main__' # True if we ran this file directly, false if it was imported as a module
 
 ### Constants ###
 
-# TODO: Measure the actual sizes of things!
-ARENA_SIZE = [2400, 1800]
+ARENA_SIZE = [2400, 1400]
 MARKER_WIDTH = 70
 INITIAL_SCAN_FRAMES = 200 # Number of frames to scan for when route planning
 
@@ -56,11 +55,8 @@ video_capture = cv2.VideoCapture(1)
 video_capture.set(3, 1280)
 video_capture.set(4, 720)
 
-VIDEO_SCALE = 0.8
-
 if DEBUG:
     cv2.namedWindow("frame-image", cv2.WINDOW_AUTOSIZE)
-    cv2.namedWindow("bw-image", cv2.WINDOW_AUTOSIZE)
 
 ### Variables ###
 
@@ -78,7 +74,7 @@ dropoff_1_pos = []
 dropoff_2_pos = []
 dropoff_3_pos = []
 
-wall_e_pos = []
+wall_e_pos = [0, 0]
 wall_e_angle = 0
 
 wall_E_here = 0
@@ -117,22 +113,39 @@ def get_coords():
 
     scan_and_locate_objects()
 
+    global markers
+    global pickup_pos
+    global dropoff_1_pos
+    global dropoff_2_pos
+    global dropoff_3_pos
+    global wall_e_pos
+    global wall_e_angle
+    global wall_E_here
+    global wall_E_moving
+
     markers = []
     
-    markers.append(robot_pos[0], robot_pos[1], 0)
-    markers.append(pickup_pos[0], pickup_pos[1], 1)
-    markers.append(dropoff_1_pos[0], dropoff_1_pos[1], 2)
-    markers.append(dropoff_2_pos[0], dropoff_2_pos[1], 3)
-    markers.append(dropoff_3_pos[0], dropoff_3_pos[1], 4)
-    markers.append(wall_e_pos[0], wall_e_pos[1], 5)
+    markers.append([int(robot_pos[0]),       int(robot_pos[1]),       0])
+    markers.append([int(pickup_pos[0]),      int(pickup_pos[1]),      1])
+    markers.append([int(dropoff_1_pos[0]),   int(dropoff_1_pos[1]),   2])
+    markers.append([int(dropoff_2_pos[0]),   int(dropoff_2_pos[1]),   3])
+    markers.append([int(dropoff_3_pos[0]),   int(dropoff_3_pos[1]),   4])
+    markers.append([int(wall_e_pos[0]),      int(wall_e_pos[1]),      5])
 
     offset = 240
 
     pos = [wall_e_pos[0] + math.sin(wall_e_angle) * offset, wall_e_pos[1] + math.cos(wall_e_angle) * offset]
 
-    markers.append(pos[0], pos[1], 6)
+    markers.append([int(pos[0]), int(pos[1]), 6])
 
-    # TODO: Markers
+    # Dummy walls
+    walls = [
+        [2000, 300, 2000, 900],
+        [1500, 900, 2000, 900],
+        [300, 300, 2000, 300],
+        [700, 600, 700, 1200],
+        [500, 800, 1100, 800],
+    ]
 
     # Return fake outputs of Vision
     return ARENA_SIZE, markers, walls, wall_E_here, wall_E_moving
@@ -143,70 +156,48 @@ def scan_and_locate_objects():
     """
     # Process n frames
     for n in range(INITIAL_SCAN_FRAMES):
-        next_frame()
+        #next_frame(n > 50)
+        next_frame(False) # TODO: DEBUG, REMOVE WHEN DONE!
 
-def next_frame():
+def next_frame(track_walls):
     """
     Processes the next frame from the camera and updates the positions of all the objects in it
     """
     # Capture current frame from the camera
     ret, frame = video_capture.read()
 
+    display_frame = frame
+
     # Convert the image from the camera to greyscale
-    out = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    grey = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
     # Scan for the markers
-    scan_for_markers(out)
+    # This MUST be done first to get the origin
+    display_frame = scan_for_markers(grey, display_frame)
 
     # Scan for the robot using the original image rather than the greyscale, it needs the colour information
-    bw_out = scan_for_robot(frame)
+    display_frame = scan_for_robot(frame, display_frame)
 
-    # Unlike the aruco marker detection, HLT doesn't do this automatically so we need to do it first
-    out = cv2.undistort(out, CAMERA_MATRIX, DIST_COEFFS)
+    if track_walls: display_frame = scan_for_walls(grey, display_frame)
 
-    out = cv2.resize(out, (int(VIDEO_SCALE * 1280), int(VIDEO_SCALE * 720)))
+    return display_frame
 
-    global walls
-
-    walls_uv = line_tracker.update(out) # Update the line tracker
-
-    walls = np.empty((1, 4))
-
-    # If origin exists
-    if origin_tvec.size != 0 and origin_rmat_inv.size != 0:
-
-        # Transform walls to world coordinates
-        for wall_uv in walls_uv:
-            start = transform_to_world_coords(wall_uv[0], wall_uv[1])
-            end   = transform_to_world_coords(wall_uv[2], wall_uv[3])
-            walls = np.append(walls, [[start[0, 0], start[1, 0], end[0, 0], end[1, 0]]], axis = 0)
-
-    return frame, bw_out
-
-def transform_to_world_coords(u, v):
+def scan_for_markers(grey, display_frame):
     """
-    Transforms the given image coordinates (uv) to world coordinates (xyz)
+    Scans the input greyscale frame for markers, updates the relevant variables and returns an annotated copy of display_frame
     """
-    # See https://www.fdxlabs.com/calculate-x-y-z-real-world-coordinates-from-a-single-camera-using-opencv/
-    
-    # Set z=1 so it transforms to the z=0 plane (I think...)
-    uv_1 = np.array([[u, v, 1]], dtype=np.float32)
-    uv_1 = uv_1.T
-    xyz_c = INV_CAMERA_MATRIX.dot(uv_1)
-    xyz_c -= origin_tvec[0].T
-    xyz = origin_rmat_inv.dot(xyz_c)
-    return xyz[0:2] # We just want x and y (z should be 0 anyway)
-
-def scan_for_markers(frame):
 
     # Detect aruco markers
     # N.B. The frame should already have been converted to greyscale at this point
-    corners, ids, rP = aruco.detectMarkers(frame, ARUCO_DICT)
+    corners, ids, rP = aruco.detectMarkers(grey, ARUCO_DICT)
 
-    if ids is None: return
+    if ids is None: return display_frame
 
     # Calculate the pose of the marker based on the camera calibration
     rvecs, tvecs, _objPoints = aruco.estimatePoseSingleMarkers(corners, MARKER_WIDTH, CAMERA_MATRIX, DIST_COEFFS)
+
+    # Draw the detected markers as an overlay on the original frame
+    display_frame = aruco.drawDetectedMarkers(display_frame, corners, ids)
 
     # Sort everything into order of IDs
     idx = np.argsort(ids, axis=0)
@@ -284,10 +275,12 @@ def scan_for_markers(frame):
         else:
             wall_E_here = 0
 
-def scan_for_robot(frame):
+    return display_frame
+
+def scan_for_robot(frame, display_frame):
     """
     Scans for the robot's aruco marker (coloured green), filtering the input image it to remove reflections from the hamster ball
-    The imput image should be COLOUR
+    The imput frame should be COLOUR
     """
 
     ### Anti-glare filter ###
@@ -298,7 +291,7 @@ def scan_for_robot(frame):
     # Mono mixer
     r_mult = -0.8
     g_mult =  0.9
-    b_mult = -0.1
+    b_mult =  0
     gray = frame[:, :, 2] * r_mult + frame[:, :, 1] * g_mult + frame[:, :, 0] * b_mult
     gray[gray < 0] = 0 # Remove negative values
 
@@ -328,6 +321,9 @@ def scan_for_robot(frame):
         idx = np.array([np.nonzero(ids == ROBOT_MARKER_ID)[0][0]]) # For some reason it occasinally detects the marker twice
 
         rvecs, tvecs, _objPoints = aruco.estimatePoseSingleMarkers(corners, MARKER_WIDTH, CAMERA_MATRIX, DIST_COEFFS)
+
+        # Draw the detected markers as an overlay on the original frame
+        display_frame = aruco.drawDetectedMarkers(display_frame, corners, ids)
         
         # Transform the rest of the points
         if origin_tvec.size != 0 and tvecs.size != 0:
@@ -345,19 +341,70 @@ def scan_for_robot(frame):
                 robot_angle = -robot_angle
             # robot_angle = math.degrees(math.asin(rmat[1][0]))
 
-    return gray
+    return display_frame
+
+def scan_for_walls(grey, display_frame):
+    """
+    Scans the input greyscale frame for walls, updates the relevant variables and returns an annotated copy of display_frame
+    """
+    # Unlike the aruco marker detection, HLT doesn't do this itself so we need to do it first
+    grey = cv2.undistort(grey, CAMERA_MATRIX, DIST_COEFFS)
+    display_frame = cv2.undistort(display_frame, CAMERA_MATRIX, DIST_COEFFS)
+
+    global walls
+
+    lines_uv = line_tracker.update(grey) # Update the line tracker
+
+    walls_uv = line_tracker.locate_centrelines(lines_uv) # Find centrelines
+
+    walls = np.empty((1, 4))
+
+    # If origin exists
+    if origin_tvec.size != 0 and origin_rmat_inv.size != 0:
+
+        # Transform walls to world coordinates
+        for wall_uv in walls_uv:
+            
+            start = transform_to_world_coords(wall_uv[0], wall_uv[1])
+            end   = transform_to_world_coords(wall_uv[2], wall_uv[3])
+            walls = np.append(walls, [[start[0, 0], start[1, 0], end[0, 0], end[1, 0]]], axis = 0)
+            
+            # Draw wall on display frame (might as well use existing loop)
+            display_frame = cv2.line(display_frame, (int(wall_uv[0]), int(wall_uv[1])), (int(wall_uv[2]), int(wall_uv[3])), (255, 255, 0), 2)
+
+    return display_frame
+
+def transform_to_world_coords(u, v):
+    """
+    Transforms the given image coordinates (uv) to world coordinates (xyz)
+    """
+    # See https://www.fdxlabs.com/calculate-x-y-z-real-world-coordinates-from-a-single-camera-using-opencv/
+    
+    # Set z=1 so it transforms to the z=0 plane (I think...)
+    uv_1 = np.array([[u, v, 1]], dtype=np.float32)
+    uv_1 = uv_1.T
+    scale_factor = 2400
+    uv_1 = scale_factor * uv_1
+    xyz_c = INV_CAMERA_MATRIX.dot(uv_1)
+    xyz_c -= origin_tvec[0].T
+    xyz = origin_rmat_inv.dot(xyz_c)
+    return xyz[0:2] # We just want x and y (z should be 0 anyway)
 
 ### DEBUGGING ###
 if DEBUG:
+
+    n = 0
+    
     while(True):
-        frame, bw_frame = next_frame()
+        # Camera does weird stuff for the first few frames so don't track lines until then
+        frame = next_frame(n > 50)
         #print(robot_pos)
         #print(robot_angle)
-        print(walls)
+        #print(walls)
         cv2.imshow('frame-image', frame)
-        cv2.imshow('bw-image', bw_frame)
         # If the button q is pressed in one of the windows
         if cv2.waitKey(20) & 0xFF == ord('q'):
             # Exit the While loop
             break
+        n += 1
         

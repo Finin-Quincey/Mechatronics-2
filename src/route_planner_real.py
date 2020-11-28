@@ -27,89 +27,89 @@ import motion_controller
 
 #####  ##### Fake Vision #####  #####
 #####  Arena  #####
-x_length = 2500 # x dimension of floorplan - EDIT THIS
-y_length = 2500 # y dimension of floorplan - EDIT THIS
-arena_size = [x_length, y_length] # Create list in Vision output form
+# x_length = 2500 # x dimension of floorplan - EDIT THIS
+# y_length = 2500 # y dimension of floorplan - EDIT THIS
+# arena_size = [x_length, y_length] # Create list in Vision output form
 
-#####  M_O  #####
-M_O = [2300, 250, 0] # M_O's initial position coord and ID - EDIT THIS
+# #####  M_O  #####
+# M_O = [2300, 250, 0] # M_O's initial position coord and ID - EDIT THIS
 
 #####  Markers  #####
-marker_count = 7 # Number of markers to test - EDIT THIS
-markers = [[0, 0, 0]] * marker_count # Initialise list
-if marker_count == 0: # If not markers...
-    markers = [] # Empty list
-if marker_count >= 1: # If 1 or more marker
-    markers[0] = M_O # Initiate list with M_O's coords and ID
-if marker_count >=2: # If 2 or more marker
-    markers[1] = [500, 2000, 1] # Assign [x,y,ID] of marker - EDIT THIS
-if marker_count >=3: # If 3 or more marker
-    markers[2] = [1500, 1200, 2] # Assign [x,y,ID] of marker - EDIT THIS
-if marker_count >=4: # If 2 or more marker
-    markers[3] = [2250, 1500, 3] # Assign [x,y,ID] of marker - EDIT THIS
-if marker_count >=5: # If 3 or more marker
-    markers[4] = [1300, 1750, 4] # Assign [x,y,ID] of marker - EDIT THIS
+# marker_count = 7 # Number of markers to test - EDIT THIS
+# markers = [[0, 0, 0]] * marker_count # Initialise list
+# if marker_count == 0: # If not markers...
+#     markers = [] # Empty list
+# if marker_count >= 1: # If 1 or more marker
+#     markers[0] = M_O # Initiate list with M_O's coords and ID
+# if marker_count >=2: # If 2 or more marker
+#     markers[1] = [500, 2000, 1] # Assign [x,y,ID] of marker - EDIT THIS
+# if marker_count >=3: # If 3 or more marker
+#     markers[2] = [1500, 1200, 2] # Assign [x,y,ID] of marker - EDIT THIS
+# if marker_count >=4: # If 2 or more marker
+#     markers[3] = [2250, 1500, 3] # Assign [x,y,ID] of marker - EDIT THIS
+# if marker_count >=5: # If 3 or more marker
+#     markers[4] = [1300, 1750, 4] # Assign [x,y,ID] of marker - EDIT THIS
     
-    ## WALL_E
-if marker_count >= 7: # If 3 or more marker
-    markers[5] = [500, 1000, 5] # Assign [x,y,ID] of marker - EDIT THIS
-    markers[6] = [500, 1250, 6]
+#     ## WALL_E
+# if marker_count >= 7: # If 3 or more marker
+#     markers[5] = [500, 1000, 5] # Assign [x,y,ID] of marker - EDIT THIS
+#     markers[6] = [500, 1250, 6]
 
 #####  Walls  #####
-wall_count = 5 # Number of walls to test - EDIT THIS
-walls = [[0, 0, 0, 0]] * wall_count # Initialise list
-if wall_count == 0: # If no walls...
-    walls = [] # Empty list
-if wall_count >= 1: # If 1 or more wall
-    walls[0] = [500, 1500, 1500, 1500] # Assign x[0][0], y[0][0], x[0][1], y[0][1]  [500, 300, 2500, 500]
-if wall_count >= 2: # If 1 or more wall
-    walls[1] = [500, 500, 2000, 500] # Assign x[1][0], y[1][0], x[1][1], y[1][1]   [0, 500, 1750, 1000]
-if wall_count >= 3: # If 1 or more wall
-    walls[2] = [1000, 1000, 1000, 2000] # Assign x[2][0], y[2][0], x[2][1], y[2][1]    [400, 1000, 2300, 1900]
-if wall_count >= 4: # If 1 or more wall
-    walls[3] = [1500, 2000, 2250, 2000] # Assign x[2][0], y[2][0], x[2][1], y[2][1]    [300, 2200, 2300, 1700]
-if wall_count >= 5: # If 1 or more wall
-    walls[4] = [2000, 2000, 2000, 500] # Assign x[2][0], y[2][0], x[2][1], y[2][1]    [300, 2200, 2300, 1700]
-# ... if more walls to test
+# wall_count = 5 # Number of walls to test - EDIT THIS
+# walls = [[0, 0, 0, 0]] * wall_count # Initialise list
+# if wall_count == 0: # If no walls...
+#     walls = [] # Empty list
+# if wall_count >= 1: # If 1 or more wall
+#     walls[0] = [500, 1500, 1500, 1500] # Assign x[0][0], y[0][0], x[0][1], y[0][1]  [500, 300, 2500, 500]
+# if wall_count >= 2: # If 1 or more wall
+#     walls[1] = [500, 500, 2000, 500] # Assign x[1][0], y[1][0], x[1][1], y[1][1]   [0, 500, 1750, 1000]
+# if wall_count >= 3: # If 1 or more wall
+#     walls[2] = [1000, 1000, 1000, 2000] # Assign x[2][0], y[2][0], x[2][1], y[2][1]    [400, 1000, 2300, 1900]
+# if wall_count >= 4: # If 1 or more wall
+#     walls[3] = [1500, 2000, 2250, 2000] # Assign x[2][0], y[2][0], x[2][1], y[2][1]    [300, 2200, 2300, 1700]
+# if wall_count >= 5: # If 1 or more wall
+#     walls[4] = [2000, 2000, 2000, 500] # Assign x[2][0], y[2][0], x[2][1], y[2][1]    [300, 2200, 2300, 1700]
+# # ... if more walls to test
 
 ##### wall_E? #####
-wall_E_here = 1
-wall_E_moving = 0
+# wall_E_here = 1
+# wall_E_moving = 0
 
 #####  Fake Vision Outputs  #####
-def get_coords(): 
-    """
-    I need: 
-    - arena_size = [xEnd, yEnd]
-        where: 
-        - xEnd = distance (mm) between the origin and the furthest x coordinate of arena
-        - yEnd = distance (mm) between the origin and the furthest y coordinate of arena
-    - markers = [x0, y0, ID]
-        where:
-        - Row 0, must be [M_O's x coordinate, M_O's y coordinate, 0] MUST BE 0 FOR ID (ARTIFICALLY DO THIS IF NOT!)
-        - Row 1, must be [Pick-up x coordinate, Pick-up y coordiante, 1] AGAIN, MUST BE 1 FOR ID
-        - Row 2, must be [Delivery point A x coordinate, Delivery point A y coordinate, 2] AGAIN, MUST BE 2 FOR ID
-        - Row 3, must be [Delivery point B x coordinate, Delivery point B y coordinate, 3] AGAIN, MUST BE 3 FOR ID
-        - Row 4, must be [Delivery point C x coordinate, Delivery point C y coordinate, 4] AGAIN, MUST BE 4 FOR ID
-        - Row 5, must be [Wall_E centre x coordinate, Wall_E centre y coordinate, 5] AGAIN, MUST BE 5 FOR ID
-        - Row 6, must be [Wall_E offset x coordinate, Wall_E offset y coordinate, 6] AGAIN, MUST BE 6 FOR ID
-        ^ !!!! And if Wall_E is not there, only output a list of 0-4 (exclude the Wall-E rows) !!!!
-    - walls = [x0, y0, x1, y1]
-        where:
-            - Row 0 is the info of one wall
-            - Row 1 is the info of the next wall etc. 
-    - wall_E_here
-        where: 
-        - This is a 0 if Wall_E's centre not in the arena bounds
-        - This is a 1 if Wall_E's centre is in the arena bounds
-    - wall_E_moving
-        where:
-        - This is a 0 if Wall_E is stopped
-        - This is a 1 if Wall_E is moving
-                """
+# def get_coords(): 
+#     """
+#     I need: 
+#     - arena_size = [xEnd, yEnd]
+#         where: 
+#         - xEnd = distance (mm) between the origin and the furthest x coordinate of arena
+#         - yEnd = distance (mm) between the origin and the furthest y coordinate of arena
+#     - markers = [x0, y0, ID]
+#         where:
+#         - Row 0, must be [M_O's x coordinate, M_O's y coordinate, 0] MUST BE 0 FOR ID (ARTIFICALLY DO THIS IF NOT!)
+#         - Row 1, must be [Pick-up x coordinate, Pick-up y coordiante, 1] AGAIN, MUST BE 1 FOR ID
+#         - Row 2, must be [Delivery point A x coordinate, Delivery point A y coordinate, 2] AGAIN, MUST BE 2 FOR ID
+#         - Row 3, must be [Delivery point B x coordinate, Delivery point B y coordinate, 3] AGAIN, MUST BE 3 FOR ID
+#         - Row 4, must be [Delivery point C x coordinate, Delivery point C y coordinate, 4] AGAIN, MUST BE 4 FOR ID
+#         - Row 5, must be [Wall_E centre x coordinate, Wall_E centre y coordinate, 5] AGAIN, MUST BE 5 FOR ID
+#         - Row 6, must be [Wall_E offset x coordinate, Wall_E offset y coordinate, 6] AGAIN, MUST BE 6 FOR ID
+#         ^ !!!! And if Wall_E is not there, only output a list of 0-4 (exclude the Wall-E rows) !!!!
+#     - walls = [x0, y0, x1, y1]
+#         where:
+#             - Row 0 is the info of one wall
+#             - Row 1 is the info of the next wall etc. 
+#     - wall_E_here
+#         where: 
+#         - This is a 0 if Wall_E's centre not in the arena bounds
+#         - This is a 1 if Wall_E's centre is in the arena bounds
+#     - wall_E_moving
+#         where:
+#         - This is a 0 if Wall_E is stopped
+#         - This is a 1 if Wall_E is moving
+#                 """
 
-    # Return fake outputs of Vision
-    return arena_size, markers, walls, wall_E_here, wall_E_moving
+#     # Return fake outputs of Vision
+#     return arena_size, markers, walls, wall_E_here, wall_E_moving
 
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! # 
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! # 
@@ -125,7 +125,7 @@ def get_coords():
 #####  Set constants  #####  
 STEP = 50 # Distance between nodes (mm)
 SAFETY_RADIUS = 140 # Distance between centre of M_O and obstacle (mm)
-PROXIMITY_RADIUS = math.sqrt(2 * STEP ** 2) # Centre of M_O to marker (mm) - made so can be any adjacent node
+PROXIMITY_RADIUS = 150 #math.sqrt(2 * STEP ** 2) # Centre of M_O to marker (mm) - made so can be any adjacent node
 WALL_E_CLEARANCE_RADIUS = 240 # Clearance between M_O and Wall_E centres
 
         # #####  Main Function Structure #####  
@@ -169,7 +169,7 @@ def M_O_go_here(ID):
         while wall_E_here == 0:
 
             # Get outputs from Vision - Same for wall_E
-            arena_size, markers, walls, wall_E_here, wall_E_moving = get_coords()
+            arena_size, markers, walls, wall_E_here, wall_E_moving = vision.get_coords()
 
             # Establish nodes/grid - Same for wall_E
             nodes, grid = establish_grid(arena_size)
@@ -303,7 +303,7 @@ def where_is_M_O(rounded_markers): # In wall_E, change ID to Wall_E ID
 
     # For the markers 1-4 (pick-up and delivery), need to be within proximity radius
     location = []
-    index = list(range(1, 4))
+    index = list(range(1, 5))
     for i in index:
         distance = math.sqrt(((rounded_markers[i][0] - rounded_markers[0][0]) ** 2) + ((rounded_markers[i][1] - rounded_markers[0][1]) ** 2))
         if distance <= PROXIMITY_RADIUS: # Is M_O close enough to a marker?
@@ -316,6 +316,8 @@ def where_is_M_O(rounded_markers): # In wall_E, change ID to Wall_E ID
         distance = math.sqrt(((rounded_markers[6][0] - rounded_markers[0][0]) ** 2) + ((rounded_markers[6][1] - rounded_markers[0][1]) ** 2))
         if distance <= 0.5 * STEP: # M_O needs to be at actual node, so within half a step of Wall_E offset
             location = rounded_marker[6][2] # If M_O close enough to Wall_E
+    
+    return location
 
 #####  Find safe nodes/grid points based on borders, walls and Wall_E  #####  
 def find_safe_zones(nodes, grid, arena_size, walls, rounded_markers):
@@ -323,8 +325,8 @@ def find_safe_zones(nodes, grid, arena_size, walls, rounded_markers):
     # Find nodes which avoid arena borders
     nodes_border_safe = []
     for node in nodes:
-        if node[0] >= SAFETY_RADIUS and node[0] <= (x_length - SAFETY_RADIUS):
-            if node[1] >= SAFETY_RADIUS and node[1] <= (y_length - SAFETY_RADIUS):
+        if node[0] >= SAFETY_RADIUS and node[0] <= (arena_size[0] - SAFETY_RADIUS):
+            if node[1] >= SAFETY_RADIUS and node[1] <= (arena_size[1] - SAFETY_RADIUS):
                 nodes_border_safe.append(node)
 
     # Find nodes which avoid crashing into Wall_E
@@ -446,6 +448,8 @@ def route_plan(rounded_markers, target, grid, nodes_safe):
     route = a_star(M_O_node, end_node, grid)
 
     if route == "Fail": # If unable to find route, find nearest safe corner
+
+        warn("Cannot find direct route, attempting to navigate to corner...")
         
         safe_corners = get_corners(nodes_safe) # Find coord of safe corners
         # closest_corner = get_closest_corner(safe_corners, rounded_markers) # Closest corner coord
@@ -691,7 +695,7 @@ def get_closest_corner(safe_corners, rounded_markers):
 def get_steps(route):
     
     steps = []
-    index = list(range(1, (len(route) - 2)))
+    index = list(range(1, (len(route) - 2))) # 1 because we're ignoring the 1st point (the start point)
 
     for i in index:
         # Calculate magnitude of x and y current jumps
@@ -713,8 +717,11 @@ def get_steps(route):
 
 ################################################
 #####  #####  Fake Mission Control  #####  #####
-destinations = [1]
+destinations = [1, 2, 1, 3, 1, 4, 1]
+#destinations = [3]
 for destination in destinations:
     M_O_go_here(destination)
+
+print("Finished!")
 
 
