@@ -88,21 +88,21 @@ def send_destination(pos, bearing, dest):
     y = int((pos[1] / SPATIAL_RANGE) * 255)
 
     # Shouldn't be outside the arena to start with
-    if x < 0 or x > 255: raise ValueError("Current x coordinate out of bounds!")
-    if y < 0 or y > 255: raise ValueError("Current y coordinate out of bounds!")
+    if x < 0 or x > 255: raise ValueError(f"Current x coordinate {pos[0]} out of bounds!")
+    if y < 0 or y > 255: raise ValueError(f"Current y coordinate {pos[1]} out of bounds!")
 
     angle = int((bearing / ANGLE_RANGE) * 255)
     
     # All angles should be within 0-360
-    if angle < 0 or angle > 255: raise ValueError("Bearing angle out of bounds!")
+    if angle < 0 or angle > 255: raise ValueError(f"Bearing angle {bearing} out of bounds!")
 
     # Convert mm coordinates to 8-bit encoded values for sending
     dx = int((dest[0] / SPATIAL_RANGE) * 255)
     dy = int((dest[1] / SPATIAL_RANGE) * 255)
 
     # Don't try and drive outside the arena!
-    if dx < 0 or dx > 255: raise ValueError("Destination x coordinate out of bounds!")
-    if dy < 0 or dy > 255: raise ValueError("Destination y coordinate out of bounds!")
+    if dx < 0 or dx > 255: raise ValueError(f"Destination x coordinate {dest[0]} out of bounds!")
+    if dy < 0 or dy > 255: raise ValueError(f"Destination y coordinate {dest[1]} out of bounds!")
 
     # Send the data to the arduino
     send_socket.sendto(bytes([x, y, angle, dx, dy]), (ROBOT_UDP_IP, MessageType.DESTINATION.value))
@@ -133,7 +133,7 @@ def send_update(angle_correction):
     angle = int(((angle_correction + 180) / ANGLE_RANGE) * 255)
     
     # All angles should be within -180 to 180
-    if angle < 0 or angle > 255: raise ValueError("Bearing angle out of bounds!")
+    if angle < 0 or angle > 255: raise ValueError(f"Bearing angle {angle_correction} out of bounds!")
 
     # Even when there's only one value, it MUST BE IN SQUARE BRACKETS!
     send_socket.sendto(bytes([angle]), (ROBOT_UDP_IP, MessageType.UPDATE.value))
