@@ -23,6 +23,8 @@ ANGLE_THRESHOLD = math.radians(5) # Lines within this angle of each other are co
 PROXIMITY_THRESHOLD = 8 # Parallel lines within this distance of each other are considered conincident
 WIDTH_THRESHOLD = 20 # Parallel, non-coincident lines within this distance of each other are considered two sides of a wall
 
+LINE_COUNT_LIMIT = 100 # We shouldn't detect more than this, if we do then something is wrong
+
 ### Variables ###
 
 # A queue of arrays of lines from previous frames
@@ -35,7 +37,8 @@ def update(frame):
     Updates the line tracker with the next frame from the camera and returns the merged lines from the last n frames
     """
     # Optional thresholding step (was needed for the kitchen floor since it's tiled!)
-    frame[frame > 50] = 255
+    # Use LineTrackerTest
+    frame[frame > 80] = 255
 
     # Edge detection
     frame = cv2.Canny(frame, 50, 150, apertureSize = 3)
@@ -48,6 +51,11 @@ def update(frame):
 
         # For some reason the HLT seems to return a 3D array that's only one layer deep, so let's remove the unnecessary 3rd dimension
         lines = lines[:, 0]
+
+        # If there are more than the maximum number, remove some so it doesn't go super slowly
+        if lines.shape[0] > LINE_COUNT_LIMIT:
+            lines = lines[0:LINE_COUNT_LIMIT, :]
+            print("Too many lines, removing excess!")
 
         # Sort them by angle
         angles = []
