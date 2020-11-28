@@ -85,7 +85,7 @@ while(True):
     gray = frame[:, :, 2] * r_mult + frame[:, :, 1] * g_mult + frame[:, :, 0] * b_mult
     gray[gray < 0] = 0 # Remove negative values
 
-    # Increase contrast
+    # Equalisation + conversion to uint8
     gray = cv2.convertScaleAbs(gray)
 
     # Adaptive threshold to separate out the marker shape
