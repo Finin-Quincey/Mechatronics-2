@@ -160,7 +160,7 @@ def check_coincidence(line1, line2):
     """
     Returns true if the two lines are approximately coincident (within the thresholds), false otherwise
     """
-    return geom.perpendicular_distance(line1, geom.midpoint(line2)) < PROXIMITY_THRESHOLD and check_parallelness(line1, line2) and closest_end_distance(line1, line2) < MAX_LINE_GAP
+    return geom.perpendicular_distance(line1, geom.midpoint(line2)) < PROXIMITY_THRESHOLD and check_parallelness(line1, line2)# and closest_end_distance(line1, line2) < MAX_LINE_GAP
 
 def closest_end_distance(line1, line2):
     """
@@ -198,7 +198,7 @@ def locate_centrelines(lines):
 
             perp_dist = geom.perpendicular_distance(ref_line, geom.midpoint(line))
 
-            if check_parallelness(ref_line, line) and perp_dist < closest_distance and perp_dist > PROXIMITY_THRESHOLD and closest_end_distance(ref_line, line) < GAP_THRESHOLD:
+            if check_parallelness(ref_line, line) and perp_dist < closest_distance and perp_dist > PROXIMITY_THRESHOLD:# and closest_end_distance(ref_line, line) < GAP_THRESHOLD:
                 closest_line = line
                 lines = np.delete(lines, i, axis = 0)
                 break
