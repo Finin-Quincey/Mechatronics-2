@@ -27,9 +27,10 @@ PROXIMITY_THRESHOLD = 15 # Parallel lines within this distance of each other are
 GAP_THRESHOLD = 100 # Coincident lines whose ends are further apart than this will not be merged
 WIDTH_THRESHOLD = 50 # Parallel, non-coincident lines within this distance of each other are considered two sides of a wall
 
-LINE_COUNT_LIMIT = 100 # We shouldn't detect more than this, if we do then something is wrong
+LINE_COUNT_LIMIT = 80 # We shouldn't detect more than this, if we do then something is wrong
 
 # HLT Parameters
+HLT_THRESHOLD = 80
 MIN_LINE_LENGTH = 50
 MAX_LINE_GAP = 60
 
@@ -53,7 +54,7 @@ def update(frame):
 
     # Hough line transform
     # This returns lines in a 3D matrix of the form [[[x1, y1, x2, y2]], [...], ...]
-    lines = cv2.HoughLinesP(frame, 1, np.pi/180, 80, minLineLength = MIN_LINE_LENGTH, maxLineGap = MAX_LINE_GAP)
+    lines = cv2.HoughLinesP(frame, 1, np.pi/180, HLT_THRESHOLD, minLineLength = MIN_LINE_LENGTH, maxLineGap = MAX_LINE_GAP)
 
     if lines is not None: # If we found some lines
 
