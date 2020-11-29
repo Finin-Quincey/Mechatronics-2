@@ -15,6 +15,7 @@ DEBUG = __name__ == '__main__' # True if we ran this file directly, false if it 
 FRAME_WIDTH = 1280          # Horizontal resolution of the camera in pixels
 FRAME_HEIGHT = 720          # Vertical resolution of the camera in pixels
 
+CAMERA_HEIGHT = 2250        # Height of the camera above the floor (used to find wall world coords)
 ARENA_SIZE = [2400, 1400]   # Size of the arena in mm
 MARKER_WIDTH = 70           # Width of the aruco markers in mm
 INITIAL_SCAN_FRAMES = 200   # Number of frames to scan for when route planning
@@ -39,6 +40,7 @@ ARUCO_DICT = aruco.Dictionary_get(aruco.DICT_4X4_50)
 CALIBRATION = np.load('calibrations/webcam.npz')
 CAMERA_MATRIX = CALIBRATION['CM'] # Camera matrix
 DIST_COEFFS = CALIBRATION['dist_coef'] # Distortion coefficients from the camera
+INV_CAMERA_MATRIX = np.linalg.inv(CAMERA_MATRIX)
 
 # Initialise the camera
 video_capture = cv2.VideoCapture(1)
@@ -53,9 +55,11 @@ if DEBUG:
 ### Variables ###
 
 origin_tvec = np.empty((0, 0))
-origin_rvec = np.empty((0, 0))
-transform_matrix = np.empty((0, 0))     # Transforms IMAGE (u, v) to WORLD (x, y, z)
-inv_transform_matrix = np.empty((0, 0)) # Transforms WORLD (x, y, z) to IMAGE (u, v)
+# origin_rvec = np.empty((0, 0))
+origin_rmat = np.empty((0, 0))      # Transforms IMAGE (u, v) to WORLD (x, y, z)
+origin_rmat_inv = np.empty((0, 0))  # Transforms WORLD (x, y, z) to IMAGE (u, v)
+# transform_matrix = np.empty((0, 0))     # Transforms IMAGE (u, v) to WORLD (x, y, z)
+# inv_transform_matrix = np.empty((0, 0)) # Transforms WORLD (x, y, z) to IMAGE (u, v)
 
 markers = [] # Will store the detected marker positions
 walls = [] # Will store the detected wall positions
@@ -143,6 +147,15 @@ def get_coords():
     #     [500, 800, 1100, 800],
     # ]
 
+    # walls = [
+    #     [450, 300, 450, 1000],
+    #     [450, 450, 1000, 450],
+    #     [450, 1000, 950, 1000],
+    #     [1550, 300, 1550, 900],
+    #     [1550, 300, 1950, 300],
+    #     [1950, 300, 1950, 900]
+    # ]
+
     # Return fake outputs of Vision
     return ARENA_SIZE, markers, walls, wall_E_here, wall_E_moving
 
@@ -153,6 +166,7 @@ def scan_and_locate_objects():
     # Process n frames
     for n in range(INITIAL_SCAN_FRAMES):
         next_frame(n > 100) # Allow the camera to settle before scanning for lines
+        #next_frame(False) # DEBUG
 
 def next_frame(track_walls):
     """
@@ -214,18 +228,20 @@ def scan_for_markers(grey, display_frame):
     global wall_E_here
     global wall_E_moving
     global origin_tvec
-    global origin_rvec
-    global transform_matrix
-    global inv_transform_matrix
+    global origin_rmat
+    global origin_rmat_inv
+    # global transform_matrix
+    # global inv_transform_matrix
 
     # Split tvecs and rvecs into origin and actual object markers
 
     if corner_indices.size > 0:
         origin_tvec = tvecs[corner_indices[0]] # Get tvec of arena origin marker
         origin_rvec = rvecs[corner_indices[0]] # Get rvec of arena origin marker
-        rmat, jacobian = cv2.Rodrigues(origin_rvec) # Convert rvec to full 3x3 rotation matrix
-        transform_matrix = np.hstack((rmat, origin_tvec[0].T)) # Assemble transform matrix
-        inv_transform_matrix = np.linalg.inv(np.vstack((transform_matrix, np.array([0, 0, 0, 1])))) # Compute inverse transform matrix
+        origin_rmat, jacobian = cv2.Rodrigues(origin_rvec) # Convert rvec to full 3x3 rotation matrix
+        origin_rmat_inv = np.linalg.inv(origin_rmat) # Invert rotation matrix for later
+        # transform_matrix = np.hstack((origin_rmat, origin_tvec[0].T)) # Assemble transform matrix
+        # inv_transform_matrix = np.linalg.inv(np.vstack((transform_matrix, np.array([0, 0, 0, 1])))) # Compute inverse transform matrix
     
     if other_indices.size > 0:
         tvecs = tvecs[other_indices]
@@ -362,14 +378,14 @@ def scan_for_walls(grey, display_frame):
     walls = np.empty((1, 4))
 
     # If origin exists
-    if origin_tvec.size != 0 and inv_transform_matrix.size != 0:
+    if origin_tvec.size != 0 and origin_rmat_inv.size != 0:
 
         # Transform walls to world coordinates
         for wall_uv in walls_uv:
             
             start = transform_to_world_coords(wall_uv[0], wall_uv[1])
             end   = transform_to_world_coords(wall_uv[2], wall_uv[3])
-            walls = np.append(walls, [[start[0, 0], start[1, 0], end[0, 0], end[1, 0]]], axis = 0)
+            walls = np.append(walls, [[start[0], start[1], end[0], end[1]]], axis = 0)
             
             # Draw wall on display frame (might as well use existing loop)
             display_frame = cv2.line(display_frame, (int(wall_uv[0]), int(wall_uv[1])), (int(wall_uv[2]), int(wall_uv[3])), (255, 255, 0), 2)
@@ -380,21 +396,27 @@ def transform_to_world_coords(u, v):
     """
     Transforms the given image coordinates (uv) to world coordinates (xy). The image coordinates should be undistorted first.
     """
-    # See https://answers.opencv.org/question/96474/projectpoints-functionality-question/
-    
-    # Set z=1 so it transforms to the z=0 plane (I think...)
-    uv_1 = np.array([[u, v, 0, 1]])
-    xyz = inv_transform_matrix.dot(uv_1.T)
+    # Do the reverse of what we have below
+    z = CAMERA_HEIGHT
+    pt = [u * z, v * z, z]
+    image_pt = INV_CAMERA_MATRIX.dot(pt)
+    tvec = np.squeeze(origin_tvec)
+    xyz = origin_rmat_inv.dot(image_pt - tvec).T
     return xyz[0:2] # We just want x and y (z should be 0 anyway)
 
 def transform_to_image_coords(x, y):
     """
-    Transforms the given world coordinates (xy) to image coordinates (uv). Unlike the reverse function above, THIS PERFORMS
-    DISTORTION TO THE CAMERA FRAME! This means the output point can be plotted on the image directly.
+    Transforms the given world coordinates (xy) to image coordinates (uv)
     """
-    z = origin_tvec[:, :, 2]
-    pts, _ = cv2.projectPoints(np.array([[[x, y, z]]], dtype=np.float32), origin_rvec, origin_tvec, CAMERA_MATRIX, DIST_COEFFS)
-    return np.squeeze(pts)
+    # See https://stackoverflow.com/questions/46363618/aruco-markers-with-opencv-get-the-3d-corner-coordinates?rq=1
+    tvec = np.squeeze(origin_tvec)
+    image_pt = origin_rmat.dot(np.array([x, y, 0]).T) + tvec
+    pt = CAMERA_MATRIX.dot(image_pt)
+    # p = np.array([[x - tvec[0], tvec[1] - y, -tvec[2], 1]]) # Here we flip the y coordinate
+    # pts = CAMERA_MATRIX.dot(transform_matrix).dot(p.T)
+    # This inbuilt opencv function is supposed to do the above but I can't get it to work
+    # pts, _ = cv2.projectPoints(np.array([[[x, y, z]]], dtype=np.float32), origin_rvec, origin_tvec, CAMERA_MATRIX, DIST_COEFFS)
+    return [pt[0]/pt[2], pt[1]/pt[2]] # Divide by z to get values at z=1, which is where the camera is
 
 ### DEBUGGING ###
 if DEBUG:
@@ -406,7 +428,7 @@ if DEBUG:
         frame = next_frame(n > 50)
         #print(robot_pos)
         #print(robot_angle)
-        #print(walls)
+        print(walls)
         cv2.imshow('frame-image', frame)
         # If the button q is pressed in one of the windows
         if cv2.waitKey(20) & 0xFF == ord('q'):

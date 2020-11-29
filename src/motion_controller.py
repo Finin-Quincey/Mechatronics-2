@@ -118,7 +118,7 @@ def update_display(dest):
     # Plot destination if given
     if dest is not None:
         pt = vision.transform_to_image_coords(dest[0], dest[1])
-        out = cv2.circle(out, (pt[0], pt[1]), radius = 0, color = (0, 127, 255), thickness = -1)
+        out = cv2.circle(out, (int(pt[0]), int(pt[1])), radius = 6, color = (0, 127, 255), thickness = -1)
 
     if SHOW_WINDOW:
         cv2.imshow('frame-image', cv2.resize(out, (int(VIDEO_SCALE * 1280), int(VIDEO_SCALE * 720))))
