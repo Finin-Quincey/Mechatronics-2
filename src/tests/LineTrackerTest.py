@@ -68,14 +68,14 @@ while(True):
 
         # Hough line transform
         # This returns lines in a 3D matrix of the form [[[x1, y1, x2, y2]], [...], ...]
-        lines = cv2.HoughLinesP(edges, 1, np.pi/180, 80, minLineLength = 25, maxLineGap = 10)
+        lines = cv2.HoughLinesP(edges, 1, np.pi/180, line_tracker.HLT_THRESHOLD, minLineLength = line_tracker.MIN_LINE_LENGTH, maxLineGap = line_tracker.MAX_LINE_GAP)
 
         if lines is not None: # If we found some lines
             lines = lines[:, 0]
             # Loop through the lines and draw them
             i = 0
             for line in lines:
-                frame = cv2.line(frame, (int(line[0]), int(line[1])), (int(line[2]), int(line[3])), (255, 255, 0), 2)
+                display_frame = cv2.line(display_frame, (int(line[0]), int(line[1])), (int(line[2]), int(line[3])), (255, 255, 0), 2)
                 i += 1
                 if i > 50: break
 
