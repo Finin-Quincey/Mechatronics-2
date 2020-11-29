@@ -207,7 +207,7 @@ def M_O_go_here(ID):
                 # Move to this step
                 motion_controller.go_to(step)
 
-        print("Wall-E detected!")
+        if wall_E_here == 1: print("Wall-E detected!")
 
         flag = True
 
