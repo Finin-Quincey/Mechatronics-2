@@ -37,6 +37,8 @@ def nudge_forward():
     """
     Makes the robot drive forward a short distance, without feedback
     """
+    print("Nudging forward...")
+    vision.wall_e_angle
     comms.send_forward()
     time.sleep(1)
     comms.send_stop()

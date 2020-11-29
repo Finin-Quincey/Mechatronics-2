@@ -183,6 +183,7 @@ def M_O_go_here(ID):
             # If M_O already at target ID, target_reached = 1 - Change this for wall_E
             if location == ID:
                 target_reached = 1
+                print("Route completed")
                 break
 
             # Work out safe travel nodes - Same for wall_E
@@ -193,6 +194,7 @@ def M_O_go_here(ID):
             
             if route == []: 
                 target_reached = 1 # If no route was found, skip this destination (exit the M_O_go_here function)
+                print(f"Cannot find route, skipping target {ID}")
                 break
 
             # Turn the route into steps 
@@ -205,11 +207,15 @@ def M_O_go_here(ID):
                 # Move to this step
                 motion_controller.go_to(step)
 
+        print("Wall-E detected!")
+
         flag = True
 
         # If wallE here
         while wall_E_here == 1 and flag:
             
+            _, _, _, wall_E_here, wall_E_moving = vision.get_coords()
+
             # And if wallE is stopped
             while wall_E_moving == 0:
                 
@@ -227,8 +233,9 @@ def M_O_go_here(ID):
 
                 # If M_O already at target ID, target_reached = 1 - Change this for wall_E
                 if location == 6: # If at Wall_E offset
-                    pass
-                    # move M_O to hit Wall_E
+                    motion_controller.nudge_forward()
+                    flag = False
+                    break
 
                 # Work out safe travel nodes - Same for wall_E
                 nodes_safe, grid = find_safe_zones(nodes, grid, arena_size, walls, rounded_markers)
@@ -240,6 +247,7 @@ def M_O_go_here(ID):
                 ##### NOT SURE WHAT TO DO HERE IF CANNOT GET TO WALLE
                 if route == []: 
                     target_reached = 1 # If no route was found, skip this destination (exit the M_O_go_here function)
+                    print(f"Cannot find route, skipping target {ID}")
                     flag = False
                     break
 
@@ -314,13 +322,15 @@ def where_is_M_O(rounded_markers): # In wall_E, change ID to Wall_E ID
     # For the Wall_E marker (6 offset), need to be actually at correct node
     if len(rounded_markers) == 7: # If Wall_E actually in list outputted by Vision
         distance = math.sqrt(((rounded_markers[6][0] - rounded_markers[0][0]) ** 2) + ((rounded_markers[6][1] - rounded_markers[0][1]) ** 2))
-        if distance <= 0.5 * STEP: # M_O needs to be at actual node, so within half a step of Wall_E offset
-            location = rounded_marker[6][2] # If M_O close enough to Wall_E
+        if distance <= 1 * STEP: # M_O needs to be at actual node, so within half a step of Wall_E offset
+            location = rounded_markers[6][2] # If M_O close enough to Wall_E
     
     return location
 
 #####  Find safe nodes/grid points based on borders, walls and Wall_E  #####  
 def find_safe_zones(nodes, grid, arena_size, walls, rounded_markers):
+
+    print(f"Processing arena safe zones...")
 
     # Find nodes which avoid arena borders
     nodes_border_safe = []
@@ -444,6 +454,8 @@ def route_plan(rounded_markers, target, grid, nodes_safe):
 
     M_O_node = [rounded_markers[0][0], rounded_markers[0][1]]
     end_node = [rounded_markers[target][0], rounded_markers[target][1]] # Turn into a point, as a_star function reused for simple coords later
+
+    print(f"Planning route to target point {target} at position {end_node}...")
 
     route = a_star(M_O_node, end_node, grid)
 
