@@ -47,6 +47,8 @@ def go_to(dest):
     """
     Tells the robot to drive to the specified position (in mm)
     """
+    #time.sleep(2) # Wait for robot to settle, helps with overshoot on the turn
+
     attempt_locate_robot() # First, try and find the robot
 
     attempt_send_destination(dest) # Then try to send it the destination
