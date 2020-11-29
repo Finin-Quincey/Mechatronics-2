@@ -4,6 +4,7 @@ import comms
 
 import time
 import math
+import sys
 
 import numpy as np
 import cv2
@@ -27,6 +28,7 @@ LOITERING_RADIUS = 100          # Distance within which the robot is considered 
 DEBUG = __name__ == '__main__' # True if we ran this file directly, false if it was imported as a module
 
 SHOW_WINDOW = True
+VIDEO_SCALE = 0.8
 
 if SHOW_WINDOW:
     cv2.namedWindow("frame-image", cv2.WINDOW_AUTOSIZE)
@@ -60,11 +62,7 @@ def go_to(dest):
 
         time.sleep(UPDATE_PERIOD)
 
-        # Fetch the next frame from the camera, process it and display it on screen
-        out = vision.next_frame(False)
-        if SHOW_WINDOW:
-            cv2.imshow('frame-image', out)
-            cv2.waitKey(20)
+        update_display()
 
         # Calculate the distance from the robot to the destination
         robot_dest_line = [vision.robot_pos[0], vision.robot_pos[1], dest[0], dest[1]]
@@ -107,6 +105,16 @@ def go_to(dest):
     
     print("Destination reached")
 
+def update_display():
+    """
+    Fetches the next frame from the camera, processes it and displays it on-screen
+    """
+    out = vision.next_frame(False)
+    if SHOW_WINDOW:
+        cv2.imshow('frame-image', cv2.resize(out, (int(VIDEO_SCALE * 1280), int(VIDEO_SCALE * 720))))
+        if cv2.waitKey(20) & 0xFF == ord('q'):
+            sys.exit() # Exit the program if Q (quit) is pressed
+
 def attempt_locate_robot():
     """
     Continually updates the camera feed until the robot marker is detected, or throws an error if it cannot be found after a
@@ -115,11 +123,7 @@ def attempt_locate_robot():
     attempts = 0
 
     while len(vision.robot_pos) == 0 and attempts < MAX_DETECTION_ATTEMPTS:
-        out = vision.next_frame(False)
-        if SHOW_WINDOW:
-            # print(vision.robot_pos)
-            cv2.imshow('frame-image', out)
-            cv2.waitKey(20)
+        update_display()
         attempts += 1
         
     if len(vision.robot_pos) == 0:
