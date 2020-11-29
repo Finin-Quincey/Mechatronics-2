@@ -21,7 +21,7 @@ CORRECTION_ANGLE_LIMIT = 30     # Maximum magnitude of the error angle (in degre
 
 DESTINATION_REACHED_DIST = 100  # Radius around destination point within which robot is considered to have reached it
 
-LOITERING_TIME_LIMIT = 20       # Maximum time the robot can wait in one place during a move, before we resend the destination
+LOITERING_TIME_LIMIT = 12       # Maximum time the robot can wait in one place during a move, before we resend the destination
 LOITERING_RADIUS = 100          # Distance within which the robot is considered to be loitering
 
 DEBUG = __name__ == '__main__' # True if we ran this file directly, false if it was imported as a module
@@ -77,7 +77,8 @@ def go_to(dest):
             move_since_check_in = [start_pos[0], start_pos[1], vision.robot_pos[0], vision.robot_pos[1]]
 
             # If it's still there, it is loitering, which is not allowed!
-            if geom.length(robot_dest_line) < LOITERING_RADIUS:
+            if geom.length(move_since_check_in) < LOITERING_RADIUS:
+                print("Robot loitered in one place for too long! Resending previous destination")
                 attempt_send_destination(dest) # Resend the destination
 
             # Either way, update the stored position to check against next time and reset the timer
@@ -149,5 +150,4 @@ if DEBUG:
     while True:
         for dest in route:
             go_to(dest)
-            print("Reached destination")
             time.sleep(7)
