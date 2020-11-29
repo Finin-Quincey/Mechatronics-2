@@ -81,6 +81,13 @@
             "request": "launch",
             "module": "route_planner_real",
             "cwd": "${workspaceFolder}/src"
+        },
+        {
+            "name": "aruco_calibration_IGversion",
+            "type": "python",
+            "request": "launch",
+            "module": "examples.aruco_calibration_IGversion",
+            "cwd": "${workspaceFolder}"
         }
     ]
 }
