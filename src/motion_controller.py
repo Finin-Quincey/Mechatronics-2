@@ -21,6 +21,9 @@ CORRECTION_ANGLE_LIMIT = 30     # Maximum magnitude of the error angle (in degre
 
 DESTINATION_REACHED_DIST = 100  # Radius around destination point within which robot is considered to have reached it
 
+LOITERING_TIME_LIMIT = 20       # Maximum time the robot can wait in one place during a move, before we resend the destination
+LOITERING_RADIUS = 100          # Distance within which the robot is considered to be loitering
+
 DEBUG = __name__ == '__main__' # True if we ran this file directly, false if it was imported as a module
 
 SHOW_WINDOW = True
@@ -30,7 +33,7 @@ if SHOW_WINDOW:
 
 def nudge_forward():
     """
-    Makes the robot drive forward a short distance
+    Makes the robot drive forward a short distance, without feedback
     """
     comms.send_forward()
     time.sleep(1)
@@ -40,52 +43,46 @@ def go_to(dest):
     """
     Tells the robot to drive to the specified position (in mm)
     """
+    attempt_locate_robot() # First, try and find the robot
 
-    attempts = 0
+    attempt_send_destination(dest) # Then try to send it the destination
 
-    while len(vision.robot_pos) == 0 and attempts < MAX_DETECTION_ATTEMPTS:
-        out = vision.next_frame(False)
-        if SHOW_WINDOW:
-            # print(vision.robot_pos)
-            cv2.imshow('frame-image', out)
-            cv2.waitKey(20)
-        attempts += 1
-        
-    if len(vision.robot_pos) == 0:
-        raise IOError(f"Could not locate robot after {MAX_DETECTION_ATTEMPTS} attempts")
-
-    response = False
-    attempts = 0
-
-    while attempts < MAX_CONNECTION_ATTEMPTS:
-        # Remember this takes an angle from 0 (NORTH) to 360
-        response = comms.send_destination_and_wait(vision.robot_pos, vision.robot_angle % 360, dest)
-        print(f"Sent destination message to robot: \nCurrent: {vision.robot_pos}\nBearing: {vision.robot_angle % 360}\nDestination: {dest}")
-        if response: break # Move on if we got a response
-        print("Failed attempt to connect")
-        attempts += 1
-
-    if not response:
-        raise IOError(f"Failed to connect after {MAX_CONNECTION_ATTEMPTS} attempts")
+    # Store start pos of move for loitering check later
+    start_pos = vision.robot_pos
+    last_check_in_time = time.perf_counter()
 
     time.sleep(FEEDBACK_START_DELAY)
 
     start = -1
 
+    # Position feedback loop
     while True:
 
         time.sleep(UPDATE_PERIOD)
 
+        # Fetch the next frame from the camera, process it and display it on screen
         out = vision.next_frame(False)
         if SHOW_WINDOW:
             cv2.imshow('frame-image', out)
             cv2.waitKey(20)
 
+        # Calculate the distance from the robot to the destination
         robot_dest_line = [vision.robot_pos[0], vision.robot_pos[1], dest[0], dest[1]]
-
         if geom.length(robot_dest_line) < DESTINATION_REACHED_DIST: break # Stop looping if robot is near enough to dest
 
-        # print(vision.robot_pos)
+        # Loitering check
+        if time.perf_counter() - last_check_in_time > LOITERING_TIME_LIMIT:
+            
+            # Calculate the distance from where the robot was last time we checked to where it is now
+            move_since_check_in = [start_pos[0], start_pos[1], vision.robot_pos[0], vision.robot_pos[1]]
+
+            # If it's still there, it is loitering, which is not allowed!
+            if geom.length(robot_dest_line) < LOITERING_RADIUS:
+                attempt_send_destination(dest) # Resend the destination
+
+            # Either way, update the stored position to check against next time and reset the timer
+            start_pos = vision.robot_pos
+            last_check_in_time = time.perf_counter()
 
         # N.B. geom uses east = 0, ACW is positive whereas vision uses north = 0, CW is positive
         # This needs to be in -180 to 180 range
@@ -106,6 +103,45 @@ def go_to(dest):
             start = time.perf_counter()
             #print("Update sent")
             #print(error_angle)
+    
+    print("Destination reached")
+
+def attempt_locate_robot():
+    """
+    Continually updates the camera feed until the robot marker is detected, or throws an error if it cannot be found after a
+    predefined number of frames
+    """
+    attempts = 0
+
+    while len(vision.robot_pos) == 0 and attempts < MAX_DETECTION_ATTEMPTS:
+        out = vision.next_frame(False)
+        if SHOW_WINDOW:
+            # print(vision.robot_pos)
+            cv2.imshow('frame-image', out)
+            cv2.waitKey(20)
+        attempts += 1
+        
+    if len(vision.robot_pos) == 0:
+        raise IOError(f"Could not locate robot after {MAX_DETECTION_ATTEMPTS} attempts")
+
+def attempt_send_destination(dest):
+    """
+    Attempts to send a destination (move) packet to the robot, and throws an error if no response is received after a
+    predefined number of tries
+    """
+    response = False
+    attempts = 0
+
+    while attempts < MAX_CONNECTION_ATTEMPTS:
+        # Remember this takes an angle from 0 (NORTH) to 360
+        response = comms.send_destination_and_wait(vision.robot_pos, vision.robot_angle % 360, dest)
+        print(f"Sent destination message to robot: \nCurrent: {vision.robot_pos}\nBearing: {vision.robot_angle % 360}\nDestination: {dest}")
+        if response: break # Move on if we got a response
+        print("Failed attempt to connect")
+        attempts += 1
+
+    if not response:
+        raise IOError(f"Failed to connect after {MAX_CONNECTION_ATTEMPTS} attempts")
 
 # DEBUG
 if DEBUG:
