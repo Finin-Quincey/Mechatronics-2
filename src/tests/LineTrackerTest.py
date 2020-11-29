@@ -31,14 +31,14 @@ video_capture.set(4, 720)
 ### Setup viewing windows ###
 # Create two opencv named windows
 cv2.namedWindow("frame-image", cv2.WINDOW_AUTOSIZE)
-cv2.namedWindow("frame-edges", cv2.WINDOW_AUTOSIZE)
+# cv2.namedWindow("frame-edges", cv2.WINDOW_AUTOSIZE)
 
 # Position the windows next to each other
 cv2.moveWindow("frame-image", 100, 100)
-cv2.moveWindow("frame-edges", 800, 100)
+# cv2.moveWindow("frame-edges", 800, 100)
 
 n = 0
-t = 20 # Threshold for tuning
+t = 40 # Threshold for tuning
 
 ### Run Camera ###
 # Execute this continuously
@@ -56,6 +56,8 @@ while(True):
     frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
     frame[frame > t] = 255 # Tune threshold
+
+    display_frame = cv2.cvtColor(frame, cv2.COLOR_GRAY2BGR)
     
     #frame = cv2.adaptiveThreshold(frame, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, t)
 
@@ -77,27 +79,26 @@ while(True):
                 i += 1
                 if i > 50: break
 
-        # Convert the image from the camera to Gray scale
-        out = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-
         # Update line tracker
-        lines = line_tracker.update(out)
+        lines = line_tracker.update(frame)
 
         if lines is not None: # If we found some lines
             # Loop through the lines and draw them
             for line in lines:
-                frame = cv2.line(frame, (int(line[0]), int(line[1])), (int(line[2]), int(line[3])), (255, 0, 0), 2)
+                display_frame = cv2.line(display_frame, (int(line[0]), int(line[1])), (int(line[2]), int(line[3])), (255, 0, 0), 2)
 
         centrelines = line_tracker.locate_centrelines(lines)
 
         if centrelines is not None: # If we found some lines
             # Loop through the lines and draw them
             for line in centrelines:
-                frame = cv2.line(frame, (int(line[0]), int(line[1])), (int(line[2]), int(line[3])), (0, 0, 255), 2)
+                display_frame = cv2.line(display_frame, (int(line[0]), int(line[1])), (int(line[2]), int(line[3])), (0, 0, 255), 2)
+    
+    cv2.putText(display_frame, f"Threshold: {t} (W to increase, S to decrease)", (20, 700), cv2.FONT_HERSHEY_PLAIN, 2, (255, 0, 0), 2)
 
     # Display the original frame in a window
-    cv2.imshow('frame-image', frame)
-    cv2.imshow('frame-edges', edges)
+    cv2.imshow('frame-image', display_frame)
+    # cv2.imshow('frame-edges', edges)
 
     # Stop the performance counter
     #end = time.perf_counter()
@@ -107,10 +108,12 @@ while(True):
     if key == ord('q'):
         # Exit the While loop
         break
-    elif key == ord('w'):
+    elif key == ord('w') and t < 255:
         t += 1
+    elif key == ord('s') and t > 0:
+        t -= 1
 
-    # n += 1
+    n += 1
 
 # When everything done, release the capture
 video_capture.release()
