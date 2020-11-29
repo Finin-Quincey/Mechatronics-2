@@ -16,23 +16,29 @@ import math
 import geom
 
 ### Constants ###
+
 # All distances in PIXELS in here (line tracker has no knowledge of real units, transforms and the like)
 
-INTERP_FRAMES = 15 # The number of frames over which lines will be merged
+INTERP_FRAMES = 15                  # The number of frames over which lines will be merged
 
-THRESHOLD = 55 # Black level threshold below which lines are detected
+THRESHOLD = 60                      # Black level threshold below which lines are detected
 
-ANGLE_THRESHOLD = math.radians(10) # Lines within this angle of each other are considered parallel
-PROXIMITY_THRESHOLD = 15 # Parallel lines within this distance of each other are considered conincident
-GAP_THRESHOLD = 100 # Coincident lines whose ends are further apart than this will not be merged
-WIDTH_THRESHOLD = 50 # Parallel, non-coincident lines within this distance of each other are considered two sides of a wall
+# Line tracking parameters
+LINE_COUNT_LIMIT = 80               # We shouldn't detect more lines than this, if we do then something is wrong
+ANGLE_THRESHOLD = math.radians(20)  # Lines within this angle of each other are considered parallel
+PROXIMITY_THRESHOLD = 15            # Parallel lines within this distance of each other are considered conincident
+#GAP_THRESHOLD = 100                # Coincident lines whose ends are further apart than this will not be merged
+WIDTH_THRESHOLD = 50                # Parallel, non-coincident lines within this distance of each other are considered two sides of a wall
 
-LINE_COUNT_LIMIT = 80 # We shouldn't detect more than this, if we do then something is wrong
+# Edge detector parameters
+CANNY_LOWER_THRESHOLD = 50          # Lower threshold value for the Canny edge detector
+CANNY_UPPER_THRESHOLD = 150         # Upper threshold value for the Canny edge detector
+CANNY_APERTURE_SIZE = 3             # Aperture size for the Canny edge detector
 
-# HLT Parameters
-HLT_THRESHOLD = 80
-MIN_LINE_LENGTH = 50
-MAX_LINE_GAP = 60
+# HLT parameters
+HLT_THRESHOLD = 80                  # Value threshold for the Hough line transform
+MIN_LINE_LENGTH = 50                # Minimum line length that the HLT can detect
+MAX_LINE_GAP = 60                   # Maximum gap that lines can bridge for the HLT to detect them
 
 ### Variables ###
 
@@ -50,7 +56,7 @@ def update(frame):
     frame[frame > THRESHOLD] = 255
 
     # Edge detection
-    frame = cv2.Canny(frame, 50, 150, apertureSize = 3)
+    frame = cv2.Canny(frame, CANNY_LOWER_THRESHOLD, CANNY_UPPER_THRESHOLD, apertureSize = CANNY_APERTURE_SIZE)
 
     # Hough line transform
     # This returns lines in a 3D matrix of the form [[[x1, y1, x2, y2]], [...], ...]

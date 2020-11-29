@@ -12,30 +12,22 @@ DEBUG = __name__ == '__main__' # True if we ran this file directly, false if it 
 
 ### Constants ###
 
-ARENA_SIZE = [2400, 1400]
-MARKER_WIDTH = 70
-INITIAL_SCAN_FRAMES = 200 # Number of frames to scan for when route planning
+FRAME_WIDTH = 1280          # Horizontal resolution of the camera in pixels
+FRAME_HEIGHT = 720          # Vertical resolution of the camera in pixels
 
-ROBOT_MARKER_ID = 10
-ORIGIN_MARKER_ID = 1 # Marker representing the origin of the arena
-PICKUP_MARKER_ID = 2
-DROPOFF_1_MARKER_ID = 3
-DROPOFF_2_MARKER_ID = 4
-DROPOFF_3_MARKER_ID = 5
-WALL_E_MARKER_ID = 6
+ARENA_SIZE = [2400, 1400]   # Size of the arena in mm
+MARKER_WIDTH = 70           # Width of the aruco markers in mm
+INITIAL_SCAN_FRAMES = 200   # Number of frames to scan for when route planning
 
-# These are in CLOCKWISE ORDER!
-ARENA_CORNER_COORDS = np.array([[0, 0], [0, ARENA_SIZE[1]], ARENA_SIZE, [ARENA_SIZE[0], 0]])
+ROBOT_MARKER_ID = 10        # ID of the aruco marker attached to the robot
+ORIGIN_MARKER_ID = 1        # ID of the aruco marker representing the origin of the arena
+PICKUP_MARKER_ID = 2        # ID of the aruco marker representing the pickup point
+DROPOFF_1_MARKER_ID = 3     # ID of the aruco marker representing the 1st dropoff point
+DROPOFF_2_MARKER_ID = 4     # ID of the aruco marker representing the 2nd dropoff point
+DROPOFF_3_MARKER_ID = 5     # ID of the aruco marker representing the 3rd dropoff point
+WALL_E_MARKER_ID = 6        # ID of the aruco marker attached to Wall-E
 
-KERNEL_3 = np.ones(3, dtype = np.uint8)
-
-KERNEL_5 = np.array([
-    [0, 1, 1, 1, 0],
-    [1, 1, 1, 1, 1],
-    [1, 1, 1, 1, 1],
-    [1, 1, 1, 1, 1],
-    [0, 1, 1, 1, 0]
-], dtype = np.uint8)
+MORPH_KERNEL = np.ones(3, dtype = np.uint8) # Kernel used for morphological filtering as part of the anti-glare filter
 
 ### Initialisation ###
 
@@ -43,7 +35,8 @@ KERNEL_5 = np.array([
 ARUCO_DICT = aruco.Dictionary_get(aruco.DICT_4X4_50)
 
 # Load calibration file
-CALIBRATION = np.load('tests/Calibration.npz') # Load the camera calibration values 
+#CALIBRATION = np.load('calibrations/fq_laptop_builtin.npz')
+CALIBRATION = np.load('calibrations/webcam.npz')
 CAMERA_MATRIX = CALIBRATION['CM'] # Camera matrix
 DIST_COEFFS = CALIBRATION['dist_coef'] # Distortion coefficients from the camera
 
@@ -51,8 +44,8 @@ DIST_COEFFS = CALIBRATION['dist_coef'] # Distortion coefficients from the camera
 video_capture = cv2.VideoCapture(1)
 
 # Set the width and height of the camera to the maximum resolution it can do
-video_capture.set(3, 1280)
-video_capture.set(4, 720)
+video_capture.set(3, FRAME_WIDTH)
+video_capture.set(4, FRAME_HEIGHT)
 
 if DEBUG:
     cv2.namedWindow("frame-image", cv2.WINDOW_AUTOSIZE)
@@ -231,8 +224,8 @@ def scan_for_markers(grey, display_frame):
         origin_tvec = tvecs[corner_indices[0]] # Get tvec of arena origin marker
         origin_rvec = rvecs[corner_indices[0]] # Get rvec of arena origin marker
         rmat, jacobian = cv2.Rodrigues(origin_rvec) # Convert rvec to full 3x3 rotation matrix
-        transform_matrix = np.vstack((np.hstack((rmat, origin_tvec[0].T)), np.array([0, 0, 0, 1]))) # Assemble transform matrix
-        inv_transform_matrix = np.linalg.inv(transform_matrix) # Compute inverse transform matrix
+        transform_matrix = np.hstack((rmat, origin_tvec[0].T)) # Assemble transform matrix
+        inv_transform_matrix = np.linalg.inv(np.vstack((transform_matrix, np.array([0, 0, 0, 1])))) # Compute inverse transform matrix
     
     if other_indices.size > 0:
         tvecs = tvecs[other_indices]
@@ -308,11 +301,11 @@ def scan_for_robot(frame, display_frame):
     gray = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, -2)
 
     # Morphological opening to patch up the black regions
-    gray = cv2.dilate(gray, KERNEL_3)
-    gray = cv2.erode(gray, KERNEL_3)
+    gray = cv2.dilate(gray, MORPH_KERNEL)
+    gray = cv2.erode(gray, MORPH_KERNEL)
 
     # Finally dilate again to give it more white to find
-    gray = cv2.dilate(gray, KERNEL_3)
+    gray = cv2.dilate(gray, MORPH_KERNEL)
 
     gray = np.uint8(gray)
 
