@@ -62,7 +62,7 @@ def go_to(dest):
 
         time.sleep(UPDATE_PERIOD)
 
-        update_display()
+        update_display(dest)
 
         # Calculate the distance from the robot to the destination
         robot_dest_line = [vision.robot_pos[0], vision.robot_pos[1], dest[0], dest[1]]
@@ -105,11 +105,17 @@ def go_to(dest):
     
     print("Destination reached")
 
-def update_display():
+def update_display(dest):
     """
     Fetches the next frame from the camera, processes it and displays it on-screen
     """
     out = vision.next_frame(False)
+
+    # Plot destination if given
+    if dest is not None:
+        pt = vision.transform_to_image_coords(dest[0], dest[1])
+        out = cv2.circle(out, (pt[0], pt[1]), radius = 0, color = (0, 127, 255), thickness = -1)
+
     if SHOW_WINDOW:
         cv2.imshow('frame-image', cv2.resize(out, (int(VIDEO_SCALE * 1280), int(VIDEO_SCALE * 720))))
         if cv2.waitKey(20) & 0xFF == ord('q'):
@@ -123,7 +129,7 @@ def attempt_locate_robot():
     attempts = 0
 
     while len(vision.robot_pos) == 0 and attempts < MAX_DETECTION_ATTEMPTS:
-        update_display()
+        update_display(None)
         attempts += 1
         
     if len(vision.robot_pos) == 0:
