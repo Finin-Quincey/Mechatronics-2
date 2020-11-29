@@ -16,14 +16,22 @@ import math
 import geom
 
 ### Constants ###
+# All distances in PIXELS in here (line tracker has no knowledge of real units, transforms and the like)
 
 INTERP_FRAMES = 15 # The number of frames over which lines will be merged
 
-ANGLE_THRESHOLD = math.radians(5) # Lines within this angle of each other are considered parallel
-PROXIMITY_THRESHOLD = 8 # Parallel lines within this distance of each other are considered conincident
-WIDTH_THRESHOLD = 20 # Parallel, non-coincident lines within this distance of each other are considered two sides of a wall
+THRESHOLD = 55 # Black level threshold below which lines are detected
+
+ANGLE_THRESHOLD = math.radians(10) # Lines within this angle of each other are considered parallel
+PROXIMITY_THRESHOLD = 15 # Parallel lines within this distance of each other are considered conincident
+GAP_THRESHOLD = 100 # Coincident lines whose ends are further apart than this will not be merged
+WIDTH_THRESHOLD = 50 # Parallel, non-coincident lines within this distance of each other are considered two sides of a wall
 
 LINE_COUNT_LIMIT = 100 # We shouldn't detect more than this, if we do then something is wrong
+
+# HLT Parameters
+MIN_LINE_LENGTH = 50
+MAX_LINE_GAP = 60
 
 ### Variables ###
 
@@ -38,14 +46,14 @@ def update(frame):
     """
     # Optional thresholding step (was needed for the kitchen floor since it's tiled!)
     # Use LineTrackerTest
-    frame[frame > 80] = 255
+    frame[frame > THRESHOLD] = 255
 
     # Edge detection
     frame = cv2.Canny(frame, 50, 150, apertureSize = 3)
 
     # Hough line transform
     # This returns lines in a 3D matrix of the form [[[x1, y1, x2, y2]], [...], ...]
-    lines = cv2.HoughLinesP(frame, 1, np.pi/180, 80, minLineLength = 25, maxLineGap = 10)
+    lines = cv2.HoughLinesP(frame, 1, np.pi/180, 80, minLineLength = MIN_LINE_LENGTH, maxLineGap = MAX_LINE_GAP)
 
     if lines is not None: # If we found some lines
 
@@ -145,7 +153,14 @@ def check_coincidence(line1, line2):
     """
     Returns true if the two lines are approximately coincident (within the thresholds), false otherwise
     """
-    return geom.perpendicular_distance(line1, geom.midpoint(line2)) < PROXIMITY_THRESHOLD and check_parallelness(line1, line2)
+    return geom.perpendicular_distance(line1, geom.midpoint(line2)) < PROXIMITY_THRESHOLD and check_parallelness(line1, line2) and closest_end_distance(line1, line2) < MAX_LINE_GAP
+
+def closest_end_distance(line1, line2):
+    """
+    Returns the minimum distance between the endpoints of the two given lines (should be rectified first)
+    """
+    # No need for the start-start and end-end cases since the lines are rectified already so start < end in all cases
+    return min(geom.length([line1[0], line1[1], line2[2], line2[3]]), geom.length([line1[2], line1[3], line2[0], line2[1]]))
 
 def check_parallelness(line1, line2):
     """
@@ -174,7 +189,9 @@ def locate_centrelines(lines):
             
             line = lines[i]
 
-            if check_parallelness(ref_line, line) and geom.perpendicular_distance(ref_line, geom.midpoint(line)) < closest_distance:
+            perp_dist = geom.perpendicular_distance(ref_line, geom.midpoint(line))
+
+            if check_parallelness(ref_line, line) and perp_dist < closest_distance and perp_dist > PROXIMITY_THRESHOLD and closest_end_distance(ref_line, line) < GAP_THRESHOLD:
                 closest_line = line
                 lines = np.delete(lines, i, axis = 0)
                 break
