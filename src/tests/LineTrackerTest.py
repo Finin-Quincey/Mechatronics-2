@@ -16,7 +16,7 @@ from vision import line_tracker
 
 ### Setup camera ###
 # Read and store the calibration information from Sample_Calibration
-CALIBRATION = np.load('tests/Calibration.npz') # Load the camera calibration values 
+CALIBRATION = np.load('calibrations/webcam.npz') # Load the camera calibration values 
 CAMERA_MATRIX = CALIBRATION['CM'] # Camera matrix
 DIST_COEFFS = CALIBRATION['dist_coef'] # Distortion coefficients from the camera
 

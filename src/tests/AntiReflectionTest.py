@@ -22,7 +22,7 @@ pa = aruco.DetectorParameters_create()
 
 ### Setup camera ###
 # Read and store the calibration information from Sample_Calibration
-Camera=np.load('tests/Calibration.npz') #Load the camera calibration values 
+Camera=np.load('calibrations/webcam.npz') #Load the camera calibration values 
 CM=Camera['CM'] #camera matrix
 dist_coef=Camera['dist_coef']# distortion coefficients from the camera
 
@@ -65,12 +65,14 @@ k7 = np.array([
     [0, 0, 1, 1, 1, 0, 0]
 ], dtype = np.uint8)
 
+t_offset = -2 # Threshold for tuning
+
 ### Run Camera ###
 # Execute this continuously
 while(True):
     
     # Start the performance clock
-    start = time.perf_counter()
+    # start = time.perf_counter()
     
     # Capture current frame from the camera
     ret, frame = cap.read()
@@ -90,7 +92,7 @@ while(True):
 
     # Adaptive threshold to separate out the marker shape
     # N.B. I am aware that the aruco detector also does this but we need to do it now for the morphological operations
-    gray = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, -2)
+    gray = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, t_offset)
 
     # Morphological opening to patch up the black regions
     gray = cv2.dilate(gray, k3)
@@ -113,6 +115,8 @@ while(True):
     # Draw the detected markers as an overlay on the grayscale image
     # out = aruco.drawDetectedMarkers(gray, corners, ids)
 
+    cv2.putText(display_frame, f"Threshold offset: {t_offset} (W to increase, S to decrease)", (20, 700), cv2.FONT_HERSHEY_PLAIN, 2, (255, 0, 0), 2)
+
     s = 0.8
     frame = cv2.resize(frame, (int(s * 1280), int(s * 720)))
     gray = cv2.resize(gray, (int(s * 1280), int(s * 720)))
@@ -132,10 +136,10 @@ while(True):
         out = out
 
     # Stop the performance counter
-    end = time.perf_counter()
+    # end = time.perf_counter()
     
     # Print to console the exucution time in FPS (frames per second)
-    print ('{:4.1f}'.format(1/(end - start)))
+    # print ('{:4.1f}'.format(1/(end - start)))
     
     # Iaonnis' code
     # # Print tvecs
@@ -152,10 +156,15 @@ while(True):
 
     #print(sorted_indices)
     # print(ids)
-    # If the button q is pressed in one of the windows 
-    if cv2.waitKey(20) & 0xFF == ord('q'):
+    # If the button q is pressed in one of the windows
+    key = cv2.waitKey(20) & 0xFF
+    if key == ord('q'):
         # Exit the While loop
         break
+    elif key == ord('w') and t_offset < 255:
+        t_offset += 1
+    elif key == ord('s') and t_offset > 0:
+        t_offset -= 1
 
 # When everything done, release the capture
 cap.release()
