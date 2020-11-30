@@ -161,9 +161,9 @@ while(True):
     if key == ord('q'):
         # Exit the While loop
         break
-    elif key == ord('w') and t_offset < 255:
+    elif key == ord('w'):
         t_offset += 1
-    elif key == ord('s') and t_offset > 0:
+    elif key == ord('s'):
         t_offset -= 1
 
 # When everything done, release the capture
