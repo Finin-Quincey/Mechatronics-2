@@ -10,6 +10,8 @@ import line_tracker
 
 DEBUG = __name__ == '__main__' # True if we ran this file directly, false if it was imported as a module
 
+FALLBACK_MODE = False # True to use pre-programmed walls, false to detect them normally
+
 ### Constants ###
 
 FRAME_WIDTH = 1280          # Horizontal resolution of the camera in pixels
@@ -18,7 +20,6 @@ FRAME_HEIGHT = 720          # Vertical resolution of the camera in pixels
 CAMERA_HEIGHT = 2250        # Height of the camera above the floor (used to find wall world coords)
 ARENA_SIZE = [2400, 1400]   # Size of the arena in mm
 MARKER_WIDTH = 70           # Width of the aruco markers in mm
-INITIAL_SCAN_FRAMES = 200   # Number of frames to scan for when route planning
 
 ROBOT_MARKER_ID = 10        # ID of the aruco marker attached to the robot
 ORIGIN_MARKER_ID = 1        # ID of the aruco marker representing the origin of the arena
@@ -62,7 +63,7 @@ origin_rmat_inv = np.empty((0, 0))  # Transforms WORLD (x, y, z) to IMAGE (u, v)
 # inv_transform_matrix = np.empty((0, 0)) # Transforms WORLD (x, y, z) to IMAGE (u, v)
 
 markers = [] # Will store the detected marker positions
-walls = [] # Will store the detected wall positions
+walls = np.empty((1, 4)) # Will store the detected wall positions
 
 robot_pos = []
 robot_angle = 0
@@ -78,9 +79,9 @@ wall_e_angle = 0
 wall_E_here = 0
 wall_E_moving = 0
 
-def get_coords(): 
+def get_object_coords(): 
     """
-    I need: 
+    Returns the positions of all the objects being tracked, in the following order:
     - arena_size = [xEnd, yEnd]
         where: 
         - xEnd = distance (mm) between the origin and the furthest x coordinate of arena
@@ -107,9 +108,7 @@ def get_coords():
         where:
         - This is a 0 if Wall_E is stopped
         - This is a 1 if Wall_E is moving
-                """
-
-    scan_and_locate_objects()
+    """
 
     global markers
     global pickup_pos
@@ -147,28 +146,20 @@ def get_coords():
     #     [500, 800, 1100, 800],
     # ]
 
-    # walls = [
-    #     [450, 300, 450, 1000],
-    #     [450, 450, 1000, 450],
-    #     [450, 1000, 950, 1000],
-    #     [1550, 300, 1550, 900],
-    #     [1550, 300, 1950, 300],
-    #     [1950, 300, 1950, 900]
-    # ]
+    if FALLBACK_MODE:
+        walls = [
+            [450, 300, 450, 1000],
+            [450, 450, 1000, 450],
+            [450, 1000, 950, 1000],
+            [1550, 300, 1550, 900],
+            [1550, 300, 1950, 300],
+            [1950, 300, 1950, 900]
+        ]
 
     # Return fake outputs of Vision
     return ARENA_SIZE, markers, walls, wall_E_here, wall_E_moving
 
-def scan_and_locate_objects():
-    """
-    Performs a scan of the arena for several frames
-    """
-    # Process n frames
-    for n in range(INITIAL_SCAN_FRAMES):
-        next_frame(n > 100) # Allow the camera to settle before scanning for lines
-        #next_frame(False) # DEBUG
-
-def next_frame(track_walls):
+def next_frame(scan_walls):
     """
     Processes the next frame from the camera and updates the positions of all the objects in it
     """
@@ -187,7 +178,7 @@ def next_frame(track_walls):
     # Scan for the robot using the original image rather than the greyscale, it needs the colour information
     display_frame = scan_for_robot(frame, display_frame)
 
-    if track_walls: display_frame = scan_for_walls(grey, display_frame)
+    if scan_walls and not FALLBACK_MODE: display_frame = scan_for_walls(grey, display_frame)
 
     return display_frame
 
@@ -276,7 +267,6 @@ def scan_for_markers(grey, display_frame):
             new_pos = np.squeeze(markers[i])
 
             if len(wall_e_pos) > 0:
-                # TODO: Fiddle with this
                 wall_E_moving = geom.length([wall_e_pos[0], wall_e_pos[1], new_pos[0], new_pos[1]]) > 10
 
             if wall_E_moving:
@@ -428,7 +418,7 @@ if DEBUG:
         frame = next_frame(n > 50)
         #print(robot_pos)
         #print(robot_angle)
-        print(walls)
+        #print(walls)
         cv2.imshow('frame-image', frame)
         # If the button q is pressed in one of the windows
         if cv2.waitKey(20) & 0xFF == ord('q'):

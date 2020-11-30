@@ -169,7 +169,7 @@ def M_O_go_here(ID):
         while wall_E_here == 0:
 
             # Get outputs from Vision - Same for wall_E
-            arena_size, markers, walls, wall_E_here, wall_E_moving = vision.get_coords()
+            arena_size, markers, walls, wall_E_here, wall_E_moving = motion_controller.get_coords()
 
             # Establish nodes/grid - Same for wall_E
             nodes, grid = establish_grid(arena_size)
@@ -202,7 +202,7 @@ def M_O_go_here(ID):
             
             # Move to each step
             for step in steps:
-                _, _, _, wall_E_here, wall_E_moving = vision.get_coords()
+                _, _, _, wall_E_here, wall_E_moving = motion_controller.get_coords()
                 if wall_E_here == 1: break
                 # Move to this step
                 motion_controller.go_to(step)
@@ -214,13 +214,13 @@ def M_O_go_here(ID):
         # If wallE here
         while wall_E_here == 1 and flag:
             
-            _, _, _, wall_E_here, wall_E_moving = vision.get_coords()
+            _, _, _, wall_E_here, wall_E_moving = motion_controller.get_coords()
 
             # And if wallE is stopped
             while wall_E_moving == 0:
                 
                 # Get outputs from Vision - Same for wall_E
-                arena_size, markers, walls, wall_E_here, wall_E_moving = vision.get_coords()
+                arena_size, markers, walls, wall_E_here, wall_E_moving = motion_controller.get_coords()
 
                 # Establish nodes/grid - Same for wall_E
                 nodes, grid = establish_grid(arena_size)
@@ -256,7 +256,7 @@ def M_O_go_here(ID):
 
                 # Move to each step - Same for wall_E
                 for step in steps:
-                    _, _, _, wall_E_here, wall_E_moving = vision.get_coords()
+                    _, _, _, wall_E_here, wall_E_moving = motion_controller.get_coords()
                     # Move to this step
                     motion_controller.go_to(step)
 

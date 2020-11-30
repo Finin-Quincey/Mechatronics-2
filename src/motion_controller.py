@@ -9,36 +9,71 @@ import sys
 import numpy as np
 import cv2
 
+DEBUG = __name__ == '__main__' # True if we ran this file directly, false if it was imported as a module
+
 ### Constants ###
 
 MAX_CONNECTION_ATTEMPTS = 5     # Maximum number of tries to get a response from the arduino
 MAX_DETECTION_ATTEMPTS = 200    # Maximum number of tries to find the robot in frame
+INITIAL_SCAN_FRAMES = 100       # Number of frames to scan for when route planning
 
 UPDATE_PERIOD = 0.02            # Time between aruco rescans
-FEEDBACK_START_DELAY = 1.5      # Delay between sending destination message and first update message
+FEEDBACK_START_DELAY = 8        # Delay between sending destination message and first update message
 FEEDBACK_INTERVAL = 1.5         # Delay between consecutive update messages
 
-CORRECTION_ANGLE_LIMIT = 30     # Maximum magnitude of the error angle (in degrees) sent in update messages
+CORRECTION_ANGLE_LIMIT = 15     # Maximum magnitude of the error angle (in degrees) sent in update messages
 
 DESTINATION_REACHED_DIST = 100  # Radius around destination point within which robot is considered to have reached it
 
 LOITERING_TIME_LIMIT = 12       # Maximum time the robot can wait in one place during a move, before we resend the destination
 LOITERING_RADIUS = 100          # Distance within which the robot is considered to be loitering
 
-DEBUG = __name__ == '__main__' # True if we ran this file directly, false if it was imported as a module
+SHOW_WINDOW = True              # Whether to show the mission control window
+WINDOW_NAME = "Mission Control" # Name of the mission control window
+VIDEO_SCALE = 0.8               # Scale of the window relative to the video resolution
 
-SHOW_WINDOW = True
-VIDEO_SCALE = 0.8
+DEST_MARKER_CLR = (0, 127, 255) # Colour of the destination marker
+
+DEBUG_ROUTE = [
+    [1200, 800],
+    [600, 400],
+    [500, 900],
+    [2000, 1200]
+]
+
+### Initialisation ###
 
 if SHOW_WINDOW:
-    cv2.namedWindow("frame-image", cv2.WINDOW_AUTOSIZE)
+    cv2.namedWindow(WINDOW_NAME, cv2.WINDOW_AUTOSIZE)
+
+walls_scanned = False
+
+### Functions ###
+
+def get_coords():
+    """
+    Performs a scan of the arena for a predefined number of frames and returns the coordinates of objects
+    """
+    print("Scanning...")
+
+    global walls_scanned
+
+    # Process n frames
+    for n in range(INITIAL_SCAN_FRAMES):
+        update_vision_and_display(None, not walls_scanned)
+
+    walls_scanned = True
+
+    return vision.get_object_coords()
 
 def nudge_forward():
     """
     Makes the robot drive forward a short distance, without feedback
     """
     print("Nudging forward...")
-    vision.wall_e_angle
+    error_angle = (vision.wall_e_angle - vision.robot_angle) % 360 - 180
+    comms.send_update(error_angle) # Turn the robot to face Wall-E
+    time.sleep(10)
     comms.send_forward()
     time.sleep(1)
     comms.send_stop()
@@ -66,11 +101,12 @@ def go_to(dest):
 
         time.sleep(UPDATE_PERIOD)
 
-        update_display(dest)
+        update_vision_and_display(dest, False)
 
         # Calculate the distance from the robot to the destination
         robot_dest_line = [vision.robot_pos[0], vision.robot_pos[1], dest[0], dest[1]]
-        if geom.length(robot_dest_line) < DESTINATION_REACHED_DIST: break # Stop looping if robot is near enough to dest
+        dist_left = geom.length(robot_dest_line)
+        if dist_left < DESTINATION_REACHED_DIST: break # Stop looping if robot is near enough to dest
 
         # Loitering check
         if time.perf_counter() - last_check_in_time > LOITERING_TIME_LIMIT:
@@ -86,6 +122,10 @@ def go_to(dest):
             # Either way, update the stored position to check against next time and reset the timer
             start_pos = vision.robot_pos
             last_check_in_time = time.perf_counter()
+
+        if dist_left < DESTINATION_REACHED_DIST * 2: continue # Don't correct when too near the destination
+
+        # Error correction
 
         # N.B. geom uses east = 0, ACW is positive whereas vision uses north = 0, CW is positive
         # This needs to be in -180 to 180 range
@@ -109,19 +149,23 @@ def go_to(dest):
     
     print("Destination reached")
 
-def update_display(dest):
+def update_vision_and_display(dest, scan_walls):
     """
     Fetches the next frame from the camera, processes it and displays it on-screen
     """
-    out = vision.next_frame(False)
+    out = vision.next_frame(scan_walls)
 
     # Plot destination if given
     if dest is not None:
         pt = vision.transform_to_image_coords(dest[0], dest[1])
-        out = cv2.circle(out, (int(pt[0]), int(pt[1])), radius = 6, color = (0, 127, 255), thickness = -1)
+        pt_x = int(pt[0])
+        pt_y = int(pt[1])
+        out = cv2.circle(out, (pt_x, pt_y), radius = 6, color = DEST_MARKER_CLR, thickness = -1)
+        out = cv2.line(out, (pt_x, pt_y), (pt_x, pt_y - 50), color = DEST_MARKER_CLR, thickness = 2)
+        out = cv2.rectangle(out, (pt_x, pt_y - 50), (pt_x + 35, pt_y - 25), color = DEST_MARKER_CLR, thickness = -1)
 
     if SHOW_WINDOW:
-        cv2.imshow('frame-image', cv2.resize(out, (int(VIDEO_SCALE * 1280), int(VIDEO_SCALE * 720))))
+        cv2.imshow(WINDOW_NAME, cv2.resize(out, (int(VIDEO_SCALE * vision.FRAME_WIDTH), int(VIDEO_SCALE * vision.FRAME_HEIGHT))))
         if cv2.waitKey(20) & 0xFF == ord('q'):
             sys.exit() # Exit the program if Q (quit) is pressed
 
@@ -133,7 +177,7 @@ def attempt_locate_robot():
     attempts = 0
 
     while len(vision.robot_pos) == 0 and attempts < MAX_DETECTION_ATTEMPTS:
-        update_display(None)
+        update_vision_and_display(None, False)
         attempts += 1
         
     if len(vision.robot_pos) == 0:
@@ -160,8 +204,7 @@ def attempt_send_destination(dest):
 
 # DEBUG
 if DEBUG:
-    route = [[1200, 800], [600, 400], [500, 900], [2000, 1200]] 
     while True:
-        for dest in route:
+        for dest in DEBUG_ROUTE:
             go_to(dest)
             time.sleep(7)
