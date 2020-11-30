@@ -115,7 +115,7 @@ while(True):
     # Draw the detected markers as an overlay on the grayscale image
     # out = aruco.drawDetectedMarkers(gray, corners, ids)
 
-    cv2.putText(display_frame, f"Threshold offset: {t_offset} (W to increase, S to decrease)", (20, 700), cv2.FONT_HERSHEY_PLAIN, 2, (255, 0, 0), 2)
+    cv2.putText(frame, f"Threshold offset: {t_offset} (W to increase, S to decrease)", (20, 700), cv2.FONT_HERSHEY_PLAIN, 2, (255, 0, 0), 2)
 
     s = 0.8
     frame = cv2.resize(frame, (int(s * 1280), int(s * 720)))
