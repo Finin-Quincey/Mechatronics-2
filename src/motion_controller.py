@@ -15,7 +15,8 @@ DEBUG = __name__ == '__main__' # True if we ran this file directly, false if it 
 
 MAX_CONNECTION_ATTEMPTS = 5     # Maximum number of tries to get a response from the arduino
 MAX_DETECTION_ATTEMPTS = 200    # Maximum number of tries to find the robot in frame
-INITIAL_SCAN_FRAMES = 100       # Number of frames to scan for when route planning
+INITIAL_SCAN_FRAMES = 30        # Number of frames to scan for when route planning
+WALL_SCAN_FRAMES = 50           # Number of additional frames to scan for when scanning walls
 
 UPDATE_PERIOD = 0.02            # Time between aruco rescans
 FEEDBACK_START_DELAY = 8        # Delay between sending destination message and first update message
@@ -58,8 +59,11 @@ def get_coords():
 
     global walls_scanned
 
+    frames = INITIAL_SCAN_FRAMES
+    if not walls_scanned: frames += WALL_SCAN_FRAMES
+
     # Process n frames
-    for n in range(INITIAL_SCAN_FRAMES):
+    for n in range(frames):
         update_vision_and_display(None, not walls_scanned)
 
     walls_scanned = True
@@ -144,8 +148,7 @@ def go_to(dest):
         if abs(error_angle) > 1 and time.perf_counter() - start > FEEDBACK_INTERVAL:
             comms.send_update(error_angle)
             start = time.perf_counter()
-            #print("Update sent")
-            #print(error_angle)
+            print(f"Sent course correction: {error_angle} degrees")
     
     print("Destination reached")
 

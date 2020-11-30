@@ -6,7 +6,7 @@ import logging  # This library will offer us a different method to print informa
 
 from enum import Enum # Enumeration types
 
-DEBUG = True
+DEBUG = False
 
 ### Constants ###
 
