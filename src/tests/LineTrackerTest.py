@@ -38,7 +38,7 @@ cv2.moveWindow("frame-image", 100, 100)
 # cv2.moveWindow("frame-edges", 800, 100)
 
 n = 0
-t = 40 # Threshold for tuning
+t = 250 # Threshold for tuning
 
 ### Run Camera ###
 # Execute this continuously
@@ -55,6 +55,7 @@ while(True):
 
     frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
+    frame[frame < t] = 0 # Tune threshold
     frame[frame > t] = 255 # Tune threshold
 
     display_frame = cv2.cvtColor(frame, cv2.COLOR_GRAY2BGR)

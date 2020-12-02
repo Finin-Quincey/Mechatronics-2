@@ -21,7 +21,7 @@ import geom
 
 INTERP_FRAMES = 15                  # The number of frames over which lines will be merged
 
-THRESHOLD = 60                      # Black level threshold below which lines are detected
+THRESHOLD = 243                     # White level threshold above which lines are detected
 
 # Line tracking parameters
 LINE_COUNT_LIMIT = 80               # We shouldn't detect more lines than this, if we do then something is wrong
@@ -53,6 +53,7 @@ def update(frame):
     """
     # Optional thresholding step (was needed for the kitchen floor since it's tiled!)
     # Use LineTrackerTest
+    frame[frame < THRESHOLD] = 0
     frame[frame > THRESHOLD] = 255
 
     # Edge detection

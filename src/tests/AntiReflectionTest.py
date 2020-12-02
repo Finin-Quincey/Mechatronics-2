@@ -65,7 +65,10 @@ k7 = np.array([
     [0, 0, 1, 1, 1, 0, 0]
 ], dtype = np.uint8)
 
-t_offset = -2 # Threshold for tuning
+t_offset = -3 # Threshold for tuning
+r_mult = -0.9
+g_mult =  1.6
+b_mult = -0.4
 
 ### Run Camera ###
 # Execute this continuously
@@ -81,9 +84,6 @@ while(True):
     #scaled = cv2.convertScaleAbs(frame, alpha = 1.8, beta = -220)
 
     # Mono mixer
-    r_mult = -0.8
-    g_mult =  0.9
-    b_mult = -0.1
     gray = frame[:, :, 2] * r_mult + frame[:, :, 1] * g_mult + frame[:, :, 0] * b_mult
     gray[gray < 0] = 0 # Remove negative values
 
@@ -116,6 +116,7 @@ while(True):
     # out = aruco.drawDetectedMarkers(gray, corners, ids)
 
     cv2.putText(frame, f"Threshold offset: {t_offset} (W to increase, S to decrease)", (20, 700), cv2.FONT_HERSHEY_PLAIN, 2, (255, 0, 0), 2)
+    cv2.putText(frame, f"Mult: r = {r_mult}, g = {g_mult}, b = {b_mult}, ", (20, 650), cv2.FONT_HERSHEY_PLAIN, 2, (255, 0, 0), 2)
 
     s = 0.8
     frame = cv2.resize(frame, (int(s * 1280), int(s * 720)))
@@ -165,6 +166,18 @@ while(True):
         t_offset += 1
     elif key == ord('s'):
         t_offset -= 1
+    elif key == ord('r'):
+        r_mult += 0.1
+    elif key == ord('f'):
+        r_mult -= 0.1
+    elif key == ord('t'):
+        g_mult += 0.1
+    elif key == ord('g'):
+        g_mult -= 0.1
+    elif key == ord('y'):
+        b_mult += 0.1
+    elif key == ord('h'):
+        b_mult -= 0.1
 
 # When everything done, release the capture
 cap.release()

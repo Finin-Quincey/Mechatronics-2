@@ -293,9 +293,9 @@ def scan_for_robot(frame, display_frame):
     # Works best with less complex aruco codes, i.e. ones without single-square black or white regions (10 is particularly good)
 
     # Mono mixer
-    r_mult = -0.8
-    g_mult =  0.9
-    b_mult =  0
+    r_mult = -0.9
+    g_mult =  1.6
+    b_mult = -0.4
     gray = frame[:, :, 2] * r_mult + frame[:, :, 1] * g_mult + frame[:, :, 0] * b_mult
     gray[gray < 0] = 0 # Remove negative values
 
@@ -304,7 +304,7 @@ def scan_for_robot(frame, display_frame):
 
     # Adaptive threshold to separate out the marker shape
     # N.B. I am aware that the aruco detector also does this but we need to do it now before the morphological operations
-    gray = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, -2)
+    gray = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, -3)
 
     # Morphological opening to patch up the black regions
     gray = cv2.dilate(gray, MORPH_KERNEL)
