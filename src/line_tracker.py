@@ -1,8 +1,10 @@
 """
-This class implements line tracking using a Hough line transform based on my original implementation in Java
-(see https://github.com/Finin-Quincey/Flexiweld/blob/master/src/main/java/uob/flexiweld/geom/LineTracker.java)
-The implementation is done a bit differently here to better conform to the Python style of programming, particularly
-because we have access to array operations with numpy
+Line Tracker
+
+Implements line tracking using a Hough line transform based on my original implementation in Java (see
+https://github.com/Finin-Quincey/Flexiweld/blob/master/src/main/java/uob/flexiweld/geom/LineTracker.java)
+The implementation is done a bit differently here to better conform to the Python style of programming,
+particularly because we have access to array operations with numpy.
 """
 # Disclaimer: I am nowhere near as versed in Pythonic style as I am in Java idioms. Things will probably get ugly.
 # (Heck, I've noticed about 3 inefficient things in my Java code already, so even that's far from perfect!)

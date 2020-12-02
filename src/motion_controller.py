@@ -1,3 +1,11 @@
+"""
+Motion Controller
+
+Code responsible for coordinating vision and comms to make the robot move. Takes high-level instructions
+(go to xy) from the route planner and converts them to individual commands for the robot, monitoring
+progress using the vision system and sending feeback to the robot accordingly.
+"""
+
 import geom
 import vision
 import comms
@@ -72,7 +80,8 @@ def get_coords():
 
 def nudge_forward():
     """
-    Makes the robot drive forward a short distance, without feedback
+    Makes the robot drive forward a short distance, without feedback. This is only used for driving into
+    Wall-E, which is not done via the usual target point method as Wall-E will be in the way.
     """
     print("Nudging forward...")
     error_angle = (vision.wall_e_angle - vision.robot_angle) % 360 - 180
@@ -84,19 +93,19 @@ def nudge_forward():
 
 def go_to(dest):
     """
-    Tells the robot to drive to the specified position (in mm)
+    Tells the robot to drive to the specified position (in mm), monitors its progress and sends
+    corrections as it does so. Returns once the robot is within the tolerance radius of the destination.
     """
-    #time.sleep(2) # Wait for robot to settle, helps with overshoot on the turn
 
     attempt_locate_robot() # First, try and find the robot
 
     attempt_send_destination(dest) # Then try to send it the destination
 
-    # Store start pos of move for loitering check later
+    # Store start pos of move and timestamp for loitering check later
     start_pos = vision.robot_pos
     last_check_in_time = time.perf_counter()
 
-    time.sleep(FEEDBACK_START_DELAY)
+    time.sleep(FEEDBACK_START_DELAY) # Premature feedback causes overshoot when turning!
 
     start = -1
 
@@ -110,6 +119,7 @@ def go_to(dest):
         # Calculate the distance from the robot to the destination
         robot_dest_line = [vision.robot_pos[0], vision.robot_pos[1], dest[0], dest[1]]
         dist_left = geom.length(robot_dest_line)
+
         if dist_left < DESTINATION_REACHED_DIST: break # Stop looping if robot is near enough to dest
 
         # Loitering check
@@ -127,21 +137,28 @@ def go_to(dest):
             start_pos = vision.robot_pos
             last_check_in_time = time.perf_counter()
 
-        if dist_left < DESTINATION_REACHED_DIST * 2: continue # Don't correct when too near the destination
+        # Don't correct when too near the destination, it doesn't help much and it introduces more oscillation
+        # Also, there's a tendency to overcorrect when the distances are short because a small lateral deviation
+        # results in a large correction angle 
+        if dist_left < DESTINATION_REACHED_DIST * 2: continue
 
-        # Error correction
+        # Course correction
 
-        # N.B. geom uses east = 0, ACW is positive whereas vision uses north = 0, CW is positive
+        # N.B. geom uses east = 0, ACW is positive whereas vision uses north = 0, CW is positive (stupid I know)
         # This needs to be in -180 to 180 range
+        # The golden rule when converting angles: adding before the % 360 cycles the values around within the range,
+        # whereas adding afterwards applies an offset to the entire range
         error_angle = ((90 - math.degrees(geom.angle(robot_dest_line))) - vision.robot_angle + 180) % 360 - 180
 
-        # Account for robot travelling forward or reverse
+        # Account for robot travelling forwards or in reverse
+        # This is actually fairly simple, all we need to do is constrain the angle to +/- 90 degrees
         if error_angle > 90:
             error_angle = error_angle - 180
         elif error_angle < -90:
             error_angle = error_angle + 180
 
         # Limit error correction to +/- 15 degrees
+        # It may look at first like this makes the above conversion redundant but look closely, it is different!
         if abs(error_angle) > CORRECTION_ANGLE_LIMIT: error_angle *= CORRECTION_ANGLE_LIMIT/abs(error_angle)
 
         # No point correcting by less than a degree

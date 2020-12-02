@@ -1,12 +1,17 @@
-## Code for communicating with Arduino
+"""
+Communications
 
-import socket   # This library will allow you to communicate over the network
-import time     # This library will allow us to access the system clock for pause/sleep/delay actions
-import logging  # This library will offer us a different method to print information on the terminal (better for debugging purposes)
+Code for communicating with the Arduino on board the robot. Responsible for setting up the connection,
+converting input parameters into byte (uint8) representation, and sending/receiving messages.
+"""
 
-from enum import Enum # Enumeration types
+import socket           # Network communication library
+import time             # System clock for pause/sleep/delay actions
+import logging
 
-DEBUG = False
+from enum import Enum   # Enumeration types
+
+DEBUG = False           # True to print actual bytes sent for debugging purposes
 
 ### Constants ###
 
@@ -16,29 +21,20 @@ DEBUG = False
 #ROBOT_UDP_IP = "192.168.0.169" # Home
 ROBOT_UDP_IP = "192.168.137.169" # Rovertime hotspot
 
-# This is the REMOTE port the machine will reply on (on that machine this is the value for the LOCAL port)
-ROBOT_UDP_PORT = 50001
+ROBOT_UDP_PORT = 50001  # Remote port the arduino will reply on
 
-# First we need to get the LOCAL IP address of your system
-PC_UDP_IP = socket.gethostbyname(socket.gethostname())
- 
-# This is the LOCAL port I am expecting data (on the sending machine this is the REMOTE port)
-PC_UDP_PORT = 50002
+PC_UDP_IP = socket.gethostbyname(socket.gethostname()) # Computer local IP address
+PC_UDP_PORT = 50002     # Local receive port
 
-# Time in seconds after which the 'wait for response' functions will time out
-TIMEOUT_LIMIT = 3
+TIMEOUT_LIMIT = 3       # Time in seconds after which the 'wait for response' functions will time out
 
-# Maximum x and y coordinates in mm, should be at least the size of the arena
-SPATIAL_RANGE = 2550
+SPATIAL_RANGE = 2550    # Maximum x and y coordinates in mm, should be at least the size of the arena
+ANGLE_RANGE = 360       # Maximum angle in degrees
 
-# Maximum angle in degrees
-ANGLE_RANGE = 360;
-
-BUFFER_SIZE = 1024
+BUFFER_SIZE = 1024      # Maximum size of the buffer used to receive data
 
 ### Initialisation ###
 
-# setting the logging level to INFO
 logging.basicConfig(level=logging.INFO)
 
 # Create the sockets for the UDP communication
@@ -49,17 +45,19 @@ recieve_socket = socket.socket(socket.AF_INET,     # Family of addresses, in thi
                                socket.SOCK_DGRAM)  # What protocol to use
 
 recieve_socket.bind((PC_UDP_IP, PC_UDP_PORT))
-recieve_socket.settimeout(TIMEOUT_LIMIT)
+recieve_socket.settimeout(TIMEOUT_LIMIT) # Set a timeout so the program won't just freeze if it can't connect
 
 logging.info('Sockets successfully created')
 
 ### Message Types ###
 
+# For ease of implementation in Simulink, each type of message has its own UDP port
+
 class MessagePort(Enum):
 
-    DESTINATION = 50001
-    UPDATE = 50002
-    MANUAL = 50003
+    DESTINATION = 50001     # Destination message with current xy, current bearing and destination xy
+    UPDATE = 50002          # Update message with correction angle
+    MANUAL = 50003          # Manual control message with command ID and speed
 
 ### Functions ###
 
@@ -74,7 +72,7 @@ def send_destination_and_wait(pos, bearing, dest):
     """
     # Send message to robot
     send_destination(pos, bearing, dest)
-    # Wait for response
+    # Wait for response before returning from function
     return wait_for_response()
 
 def send_destination(pos, bearing, dest):
@@ -109,9 +107,7 @@ def send_destination(pos, bearing, dest):
     # Send the data to the arduino
     send_socket.sendto(bytes([x, y, angle, dx, dy]), (ROBOT_UDP_IP, MessagePort.DESTINATION.value))
 
-    if DEBUG:
-        print("Sent destination message:")
-        print([x, y, angle, dx, dy])
+    if DEBUG: print(f"Sent destination message: {[x, y, angle, dx, dy]}")
 
 def send_update(angle_correction):
     """
@@ -125,9 +121,7 @@ def send_update(angle_correction):
     # Even when there's only one value, it MUST BE IN SQUARE BRACKETS!
     send_socket.sendto(bytes([angle]), (ROBOT_UDP_IP, MessagePort.UPDATE.value))
 
-    if DEBUG:
-        print("Sent update message:")
-        print([angle])
+    if DEBUG: print(f"Sent update message: {[angle]}")
 
 def wait_for_response():
     """

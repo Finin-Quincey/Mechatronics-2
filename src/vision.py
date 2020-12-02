@@ -1,3 +1,13 @@
+"""
+Vision System
+
+Main file for the vision system, containing most of the vision code. Responsible for setting up the camera,
+image filtering, detecting the robot, aruco markers and walls, annotating the display with detected objects,
+and handling transformations between world and image coordinates.
+
+See line_tracker.py for line tracking implementation details.
+"""
+
 import cv2
 from cv2 import aruco
 
@@ -166,6 +176,7 @@ def next_frame(scan_walls):
     # Capture current frame from the camera
     ret, frame = video_capture.read()
 
+    # Make a copy of the frame to add annotations to
     display_frame = frame
 
     # Convert the image from the camera to greyscale
@@ -324,6 +335,7 @@ def scan_for_robot(frame, display_frame):
 
         idx = np.array([np.nonzero(ids == ROBOT_MARKER_ID)[0][0]]) # For some reason it occasinally detects the marker twice
 
+        # Compute the positions and orientations of the detected aruco markers
         rvecs, tvecs, _objPoints = aruco.estimatePoseSingleMarkers(corners, MARKER_WIDTH, CAMERA_MATRIX, DIST_COEFFS)
 
         # Draw the detected markers as an overlay on the original frame
@@ -336,6 +348,7 @@ def scan_for_robot(frame, display_frame):
             robot_pos[:, :, 1] = -robot_pos[:, :, 1] # Flip y axis
             robot_pos = np.squeeze(robot_pos)
 
+            # Convert rotation vector to matrix form
             rmat, jacobian = cv2.Rodrigues(rvecs[idx])
 
             # Extract yaw angle from rotation matrix
