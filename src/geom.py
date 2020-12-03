@@ -1,4 +1,9 @@
-### Geometry Functions ###
+"""
+Geometry Functions
+
+Contains a variety of utility functions that perform geometry operations, with inputs and outputs in the
+format expected by OpenCV and the rest of the code.
+"""
 
 import math
 import numpy as np
@@ -124,7 +129,7 @@ def nearest_point_to(line, point):
     hypot = [line[0], line[1], point[0], point[1]] # Imaginary line between line start and given point
     l = length(line)
     if l == 0: # Prevent divide by zero errors, somehow these seem to happen occasionally
-        f = 0
+        f = 0 # If the point *is* the start of the line, then the nearest point on the line is simply that point!
     else:
         f = (length(hypot) * math.cos(angle_between(line, hypot))) / l
 

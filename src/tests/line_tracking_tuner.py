@@ -1,4 +1,9 @@
-##### Hough-transform-based Line Tracker Test #####
+"""
+Line Tracker Tuning Script
+
+Displays a video feed with line overlay to test the HLT-based line tracker, and allows the threshold
+parameter to be adjusted using keyboard input.
+"""
 
 ### Import required libraries ###
 # This is the vision library OpenCV

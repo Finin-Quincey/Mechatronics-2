@@ -1,4 +1,9 @@
-### WASD control for the robot ###
+"""
+Robot Joystick
+
+Simple script that allows the robot to be controlled remotely using the WASD keys. Uses OpenCV's inbuilt
+keyboard functions, they're a bit rubbish but it saves adding extra libraries specially.
+"""
 
 import socket   # This library will allow you to communicate over the network
 import time     # This library will allow us to access the system clock for pause/sleep/delay actions
@@ -70,25 +75,25 @@ while(True): # Forever
     elif key == KEY_W:
         if not key == prevkey:
             s.sendto(bytes([1, DRIVE_SPEED]), (ROBOT_UDP_IP, ROBOT_UDP_PORT))
-            time.sleep(0.6) # Ignore the momentary off bit
+            time.sleep(0.6) # Ignore the momentary unpress
         print("Forwards", end="\r")
 
     elif key == KEY_S:
         if not key == prevkey:
             s.sendto(bytes([2, DRIVE_SPEED]), (ROBOT_UDP_IP, ROBOT_UDP_PORT))
-            time.sleep(0.6) # Ignore the momentary off bit
+            time.sleep(0.6)
         print("Backwards", end="\r")
 
     elif key == KEY_A:
         if not key == prevkey:
             s.sendto(bytes([3, TURN_SPEED]), (ROBOT_UDP_IP, ROBOT_UDP_PORT))
-            time.sleep(0.6) # Ignore the momentary off bit
+            time.sleep(0.6)
         print("Left", end="\r")
 
     elif key == KEY_D:
         if not key == prevkey:
             s.sendto(bytes([4, TURN_SPEED]), (ROBOT_UDP_IP, ROBOT_UDP_PORT))
-            time.sleep(0.6) # Ignore the momentary off bit
+            time.sleep(0.6)
         print("Right", end="\r")
         
     else:

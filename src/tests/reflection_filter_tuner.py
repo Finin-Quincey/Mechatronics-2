@@ -1,5 +1,9 @@
-##### Calibration_Checker #####
-#### This code ouputs ArUco code tracking data based on the Jypyter calibration to check ####
+"""
+Reflection Filter Tuning Script
+
+Displays a video feed with ArUco marker detection to test the anti-reflection filter, and allows the various
+parameters to be adjusted using keyboard input.
+"""
 
 ### Manual Inputs ###
 # ArUco code width
