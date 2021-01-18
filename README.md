@@ -2,7 +2,7 @@
 
 _"This is one small step for hamster... one giant leap for hamsterkind"_
 
-Code for the Mechatronics 2 assignment (Year 4 IDE) to build a robot contained in a rolling 'hamster ball'. This repository contains the 'mission control' part of the code, which takes images from an overhead camera and processes them to plan a path for the robot and send commands over WiFi accordingly.
+Code for the Mechatronics 2 assignment (Year 4 IDE) to build a robot contained in a rolling 'hamster ball' (team of 4 students). This repository contains the 'mission control' part of the code, which takes images from an overhead camera and processes them to plan a path for the robot and send commands over WiFi accordingly.
 
 ![](https://github.com/Finin-Quincey/Mechatronics-2/blob/main/images/overview_labels.png)
 
