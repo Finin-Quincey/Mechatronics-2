@@ -17,8 +17,6 @@ DEBUG = False           # True to print actual bytes sent for debugging purposes
 
 # This is the IP address of the machine that the data will be send to
 # N.B. when on legacy at uni, run simulink to get the IP of the arduino
-#ROBOT_UDP_IP = "138.38.229.150" # Uni
-#ROBOT_UDP_IP = "192.168.0.169" # Home
 ROBOT_UDP_IP = "192.168.137.169" # Rovertime hotspot
 
 ROBOT_UDP_PORT = 50001  # Remote port the arduino will reply on
