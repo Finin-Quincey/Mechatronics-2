@@ -2,7 +2,7 @@
 
 _"This is one small step for hamster... one giant leap for hamsterkind"_
 
-Code for the Mechatronics 2 assignment (Year 4 IDE) to build a robot contained in a rolling 'hamster ball'.
+Code for the Mechatronics 2 assignment (Year 4 IDE) to build a robot contained in a rolling 'hamster ball'. This repository contains the 'mission control' part of the code, which takes images from an overhead camera and processes them to plan a path for the robot and send commands over WiFi accordingly.
 
 ![](https://github.com/Finin-Quincey/Mechatronics-2/blob/main/images/overview_labels.png)
 
@@ -11,6 +11,8 @@ Code for the Mechatronics 2 assignment (Year 4 IDE) to build a robot contained i
 - Python 3.8.3 (64-bit conda environment)
 - OpenCV 4.4 with ArUco library
 - Arduino Nano 33 IoT running compiled Simulink model
+- 720p webcam mounted overhead (2.25m above the floor), looking straight down
+- 2.4GHz WiFi communications via UDP
 
 ## 🚀 Run configurations
 
