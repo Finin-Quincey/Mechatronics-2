@@ -4,17 +4,17 @@ _"This is one small step for hamster... one giant leap for hamsterkind"_
 
 Code for the Mechatronics 2 assignment (Year 4 IDE) to build a robot contained in a rolling 'hamster ball'.
 
-## Specs
+## 🛰 Specs
 
 - Python 3.8.3 (64-bit conda environment)
 - OpenCV 4.4 with ArUco library
 - Arduino Nano 33 IoT running compiled Simulink model
 
-## Run configurations
+## 🚀 Run configurations
 
 See the [run configurations guide](run_configurations.md).
 
-## Troubleshooting
+## 🐍 Troubleshooting
 
 If Anaconda makes an absolute mess of the install like mine did, the following might help fix it:
 
@@ -27,7 +27,7 @@ To make pylint recognise opencv subpackages, add the following to `settings.json
 
 Common importing problems: http://python-notes.curiousefficiency.org/en/latest/python_concepts/import_traps.html
 
-## Useful links
+## 🔭 Useful links
 
 - [OpenCV documentation](https://docs.opencv.org/4.4.0/index.html)
   - [OpenCV Python tutorials](https://docs.opencv.org/4.4.0/d6/d00/tutorial_py_root.html)
