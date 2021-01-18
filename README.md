@@ -1,4 +1,4 @@
-# Mechatronics II: Working Rovertime
+# 🪐 Mechatronics II: Working Rovertime
 
 _"This is one small step for hamster... one giant leap for hamsterkind"_
 
