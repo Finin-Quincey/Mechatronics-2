@@ -4,6 +4,8 @@ _"This is one small step for hamster... one giant leap for hamsterkind"_
 
 Code for the Mechatronics 2 assignment (Year 4 IDE) to build a robot contained in a rolling 'hamster ball'.
 
+![](https://github.com/Finin-Quincey/Mechatronics-2/blob/main/images/overview_labels.png)
+
 ## 🛰 Specs
 
 - Python 3.8.3 (64-bit conda environment)
